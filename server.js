@@ -3,8 +3,10 @@ const app = express();
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const client = require('./connection.js')
-
 client.connect();
+
+
+const userRoutes = require("./routes/users");
 
 
 const cors=require("cors");
@@ -20,7 +22,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 //app.use("/plays", playsRoutes);
-//app.use("/user", userRoutes);
+app.use("/user", userRoutes);
 
 console.log("DB: "+ process.env.DB_CONNECTION);
 
