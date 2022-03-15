@@ -1,8 +1,8 @@
-const {Client} = require('pg')
+const { Client } = require('pg')
 
 const client = new Client({
     host: "localhost",
-    user: "aulaspl",
+    user: process.env.DBUSER,
     port: 5432,
     password: process.env.DBPASS,
     database: "TrabalhoBD"
