@@ -13,15 +13,6 @@ CREATE TABLE specification (spec_id serial PRIMARY KEY,
                                                    product_id serial NOT NULL,
                                                                      name TEXT NOT NULL,
                                                                                value TEXT);
---POPULATE specifications with data
-INSERT INTO specification (spec_id, product_id, name, value)
-VALUES (1, 'Tamanho', 'Pequeno');
-
-INSERT INTO specification (spec_id, product_id, name, value)
-VALUES (1, 'Cor', 'Azul');
-
-INSERT INTO specification (spec_id, product_id, name, value)
-VALUES (1, 'Processador', 'I5');
 
 
 

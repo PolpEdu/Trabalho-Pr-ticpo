@@ -1,13 +1,3 @@
-INSERT INTO roles (role_name)
-VALUES ('Administrador');
-
-
-INSERT INTO roles (role_name)
-VALUES ('Vendedor');
-
-
-INSERT INTO roles (role_name)
-VALUES ('Comprador');
 
 
 --fake empresas:
@@ -30,3 +20,13 @@ VALUES (3, 3, 1, 'Tablet', 3000, 30, 'Tablet de qualidade', 30);
 
 INSERT INTO product (product_id, specs_id, empresaPROD, name, price, quantity, description, stock)
 VALUES (4, 4, 1, 'Smartphone', 4000, 40, 'Smartphone de qualidade', 40);
+
+--POPULATE specifications with data
+INSERT INTO specification (spec_id, product_id, name, value)
+VALUES (1, 'Tamanho', 'Pequeno');
+
+INSERT INTO specification (spec_id, product_id, name, value)
+VALUES (1, 'Cor', 'Azul');
+
+INSERT INTO specification (spec_id, product_id, name, value)
+VALUES (1, 'Processador', 'I5');
