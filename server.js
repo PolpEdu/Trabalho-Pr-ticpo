@@ -57,7 +57,7 @@ app.use((err, req, res, next) => {
 
   res.status(status).json({
     status_code: status,
-    message: "Error not found!",
+    message: "Error. Usually this error occurs when the server didn't have a response or an unformmated JSON.",
   });
 });
 

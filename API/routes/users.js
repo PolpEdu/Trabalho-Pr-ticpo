@@ -10,7 +10,7 @@ const userControllers = require('../controllers/users');
 
 router.post("/", userControllers.signup);
 
-// router.post("/login", userControllers.login);
+router.put("/", userControllers.login);
 /*
 router.delete("/signout", userControllers.signout);
 */

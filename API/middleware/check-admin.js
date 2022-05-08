@@ -1,9 +1,5 @@
-// ! Pagina que verifica se o user esta logged in !
-
 const jwt = require("jsonwebtoken");
-//import tokennotfound error fro merror.js
 const TokenNotFound = require("../utils/errors");
-
 
 module.exports = (req, res, next) => {
     try {
