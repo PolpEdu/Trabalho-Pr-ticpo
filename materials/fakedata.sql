@@ -1,4 +1,7 @@
-/*
+-- create fake users:
+INSERT INTO users (nif, name, email, password, created_at, updated_at) VALUES ('123456789', 'John Doe', '
+
+
 --fake empresas:
 INSERT INTO empresa (nome, endereco, telefone, email)
 VALUES ('Empresa 1', 'Rua 1', '11111-1111', 'dhkjashdjkaj@gmail.com');
@@ -6,7 +9,6 @@ VALUES ('Empresa 1', 'Rua 1', '11111-1111', 'dhkjashdjkaj@gmail.com');
 INSERT INTO empresa (nome, endereco, telefone, email)
 VALUES ('Google teste', 'Rua 2', '22222-2222', NULL);
 
-*/ --populate product tables with some data
 
 INSERT INTO specification (product_id, name, valor_da_spec)
 VALUES (1,

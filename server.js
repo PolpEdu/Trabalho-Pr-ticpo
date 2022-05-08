@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 require("dotenv").config();
+const session = require("express-session");
 const client = require('./API/connection.js')
 
 client.connect().catch(e => {
@@ -29,6 +30,14 @@ app.use(bodyParser.json());
 
 app.use("/dbproj/product", productRoutes);
 app.use("/dbproj/user", userRoutes);
+
+app.use(
+  session({
+    secret: process.env.JWT_SECRET,
+    resave: true,
+    saveUninitialized: true,
+  })
+);
 
 
 app.set('port', process.env.PORT || 8080);

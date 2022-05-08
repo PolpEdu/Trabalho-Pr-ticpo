@@ -5,14 +5,13 @@ const userControllers = require('../controllers/users');
 
 
 
+
+//router.get('/logout', userControllers.logout)
+
+router.post("/", userControllers.signup);
+
+// router.post("/login", userControllers.login);
 /*
-router.get('/logout', userControllers.logout)
-
-router.post("/signup", userControllers.signup);
-
-router.post("/login", userControllers.login);
-
 router.delete("/signout", userControllers.signout);
-
 */
 module.exports = router;
