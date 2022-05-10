@@ -14,3 +14,7 @@ from comprador,
 where comprador.users_nif = users.nifSELECT *
     from comprador,
          users where comprador.users_nif = users.nif
+
+         --drop all tables:
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;

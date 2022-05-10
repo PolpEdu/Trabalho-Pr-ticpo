@@ -2,6 +2,22 @@ const client = require('../connection.js')
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 
+//* Nota 1: */
+// See issue: #1
+// procedures: bue densidade
+// queries simples (select)
+//! fazer em algum lado uma procedure para mostrar que sei
+
+//* Nota 2: */
+// a ordem com que fazes selects interessam a nivel de performance  
+//where if_user=63 and id_dist=50 and id_prov=1 
+// o id_user reduz, o id_dist volta a reduzir, o id_prov da o return final.
+//quanto mais indexado mais rápido o querie executa 
+
+
+//* Nota 3: */
+//não faz sentido fazer uma querie super complicadas para a bd quando aqui no node é apenas um for
+
 exports.signup = async (req, res) => {
     /*
     {
@@ -63,15 +79,19 @@ exports.signup = async (req, res) => {
                 console.log(err)
                 res.status(500).json({
                     status: 500,
-                    errors: "Couldn't fetch admins.\n" + err,
+                    errors: "Couldn't fetch admins: " + err,
                 });
             }
 
         } catch (err) {
-            console.log("Couldn't verify the authenticity of the user, token invalid.")
-
+            console.warn("Couldn't verify the authenticity of the user, token invalid.")
+            if (type !== "comprador") {
+                return res.status(401).json({
+                    status: 401,
+                    errors: "Couldn't verify the authenticity of the user and you are tring to create an administrador or vendedor. Please Log In again.",
+                });
+            }
         }
-
     } else {
         console.warn("User tried to signup without token.\nThis is fine if he wants to create a comprador account.")
         if (type !== "comprador") {
@@ -82,7 +102,7 @@ exports.signup = async (req, res) => {
         }
     }
 
-
+    // User validation done. Procede to create the user
     try {
         //* validate required fields
 

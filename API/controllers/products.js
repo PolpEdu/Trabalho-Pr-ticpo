@@ -17,26 +17,51 @@ exports.getproducts = (req, res) => {
     });
 }
 
-exports.registerproduct = (req, res) => {
-    /*
-    Example: INSERT INTO product (product_id, specs_id, empresaPROD, name, price, quantity, description, stock)
-VALUES (2, 2, 1, 'Notebook', 2000, 20, 'Notebook de qualidade', 20);
-*/
-    const { type, specs_id, empresaPROD, name, price, quantity, description, stock } = req.body;
+exports.registerproduct = (req, res) => async {
+    /* Example:
+    {
+        "name": "Product 1", //obrigatório
+        "price": 100, // obrigatório
+        "type": "computador", // obrigatório
+        "empresa_produtora": 123456789, // obrigatório
+        "stock": 10, // obrigatório
 
-    client.query('INSERT INTO product (specs_id, empresaPROD, name, price, quantity, description, stock) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)', [specs_id, empresaPROD, name, price, quantity, description, stock], (err, result) => {
-        if (err) {
-            console.log(err)
-            res.status(500).json({
-                status: 500,
-                errors: err.message,
+        "description": "This is a product", // não obrigatório
+        "specs_id": 1, // não obrigatório
+    }
+    */
+    const { type, specs_id, empresa_produtora, name, price, stock, description } = req.body;
+
+    //version defaults to 1
+    if (!type || !name || !price || !stock || !empresa_produtora) {
+        res.status(400).json({
+            status: 400,
+            errors: 'Missing required fields: name, price, type, empresa_produtora, stock',
+        });
+    }
+
+    //check if product already exists
+    // SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador WHERE users_nif = $1) THEN true ELSE false END AS isadmin
+    try {
+        const result = await client.query(
+            `SELECT CASE WHEN EXISTS(SELECT 1 FROM products WHERE name = $1) THEN true ELSE false END AS isproduct`,
+        );
+        if (result.rows[0].isproduct === true) {
+            return res.status(400).json({
+                status: 400,
+                errors: 'Product with name: ' + name + ' already exists',
             });
+        } else {
+            //todo begin transaction and insert the product into his type, to his specs, to his empresa_produtora along with the stock
         }
-        console.log(result)
-        res.status(200).json({
-            status: 200,
-            message: "Product registered successfully!",
-            results: result.rows[0].product_id
-        })
-    })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: 500,
+            errors: "Couldn't fetch products: "+ error.message,
+        });
+    }
+    
+
 }
