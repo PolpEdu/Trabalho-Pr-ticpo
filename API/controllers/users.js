@@ -2,7 +2,7 @@ const client = require('../connection.js')
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 
-exports.signup = (req, res) => {
+exports.signup = async (req, res) => {
     /*
     {
     "nif": 123456789, //9 digitos
@@ -13,39 +13,106 @@ exports.signup = (req, res) => {
     }
     */
 
+    //check for jwt header
+    const tokenheader = req.headers.authorization
     const {
         nif,
         username,
         email,
         password,
         type,
+        morada
     } = req.body
+
 
     //check if each field exits first
     if (!nif || !username || !email || !password || !type) {
+
         return res.status(400).json({
             status: 400,
-            errors: "Missing fields.",
+            errors: "Missing fields.\nFields Required: nif, username, email, password, type",
         });
     }
 
 
-    //validate nif
+
+    //* Mod Validation:
+    //validate token
+    if (tokenheader) {
+        try {
+            const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET)
+            const userNIF = decoded.nif
+            console.log(userNIF)
+            // assign the user to his type located in other tables
+
+            //there is 3 tables that inherit from users
+            //administradores, compradores, vendedores
+            //check if user is administrador
+            try {
+                let result = await client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador WHERE users_nif = $1) THEN true ELSE false END AS isadmin', [userNIF])
+                console.log("isadmin: " + result.rows[0].isadmin)
+                //! validate if user permissions corresponds to the type of user being created
+                if (result.rows[0].isadmin === false && type !== "comprador") {
+                    console.log("yo")
+                    return res.status(400).json({
+                        status: 400,
+                        errors: "You don't have permissions to create a user of type: " + type,
+                    });
+                }
+            } catch (err) {
+                console.log(err)
+                res.status(500).json({
+                    status: 500,
+                    errors: "Couldn't fetch admins.\n" + err,
+                });
+            }
+
+        } catch (err) {
+            console.log("Couldn't verify the authenticity of the user, token invalid.")
+
+        }
+
+    } else {
+        console.warn("User tried to signup without token.\nThis is fine if he wants to create a comprador account.")
+        if (type !== "comprador") {
+            return res.status(400).json({
+                status_code: 400,
+                errors: "You did not provide a token, so you can't create an administrador or vendedor account."
+            });
+        }
+    }
+
+
     try {
+        //* validate required fields
+
+        // we can only use if's since we always return inside of the conditions
+        if (type === "comprador" && !morada) {
+            return res.status(400).json({
+                status: 400,
+                errors: "Missing fields. Fields Required: morada (type is comprador)",
+            });
+        }
+        if (type === "comprador" && morada.length < 5) {
+            return res.status(400).json({
+                status: 400,
+                errors: "Invalid morada. morada must be at least 5 chars",
+            });
+        }
         if (type !== "comprador" && type !== "vendedor" && type !== "administrador") {
             return res.status(400).json({
                 status: 400,
                 errors: "User type invalid. It must be 'comprador', 'vendedor' or 'administrador'"
             })
         }
-        else if (nif.toString().length !== 9 || nif.toString().match(/^[0-9]+$/) === null) {
+        if (nif.toString().length !== 9 || nif.toString().match(/^[0-9]+$/) === null) {
             return res.status(400).json({
                 status_code: 400,
-                errors: "NIF must be 9 digits long! From"
+                errors: "NIF must be 9 digits long! Only Digits allowed."
             })
         }
         //validate email
-        else if (email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/) === null) {
+        if (email.match(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/) === null) {
             return res.status(400).json({
                 status_code: 400,
                 errors: "Email must be valid!"
@@ -61,6 +128,9 @@ exports.signup = (req, res) => {
                 errors: "Username must be between 3 and 50 characters long!"
             });
         }
+
+
+
     } catch (error) {
         return res.status(400).json({
             status_code: 400,
@@ -68,10 +138,10 @@ exports.signup = (req, res) => {
         });
     }
 
-    //TODO: fazer tudo num query aqui em baixo.
+
 
     // check if user exists using email or nif. Select from the users tables the user with the same email or nif
-    client.query('SELECT * FROM users WHERE nif = $1 OR email = $2::text OR username = $3::text', [nif, email, username], (err, result) => {
+    client.query('SELECT * FROM users WHERE nif = $1 OR email = $2::text OR username = $3::text', [nif, email, username], async (err, result) => {
         if (err) {
             console.log(err)
             return res.status(500).json({
@@ -79,13 +149,27 @@ exports.signup = (req, res) => {
                 errors: err.message,
             });
         }
-        console.log(result.rows)
         if (result.rows.length > 0) {
             console.log("User already exists!")
-            return res.status(400).json({
-                status_code: 400,
-                errors: "User already exists!",
-            });
+
+            const userfound = result.rows[0]
+            if (userfound.email === email) {
+                return res.status(400).json({
+                    status_code: 400,
+                    errors: "Email already exists!",
+                });
+            } else if (userfound.nif === nif.toString()) { //to string aqui para nao dar erro de comparação de números
+                return res.status(400).json({
+                    status_code: 400,
+                    errors: "NIF already exists!",
+                });
+            }
+            else if (userfound.username === username) {
+                return res.status(400).json({
+                    status_code: 400,
+                    errors: "Username already exists!",
+                });
+            }
         }
         else {
             // salt and hash the password
@@ -95,51 +179,103 @@ exports.signup = (req, res) => {
             //get current time
             const now = new Date();
 
+            //setting up queries
+            const query_deafault_user = 'INSERT INTO users (nif, username, email, password, created_on, last_login) VALUES ($1, $2, $3, $4, $5, $6) RETURNING nif, username, email'
+            let query_user_type;
 
-            // insert the user into the database
-            client.query(
-                'INSERT INTO users (nif, username, email, password, created_on, last_login) VALUES ($1, $2, $3, $4, $5, $6) RETURNING nif, username, email'
-                , [nif, username, email, hash, now, null],
-                (err, result) => {
-                    console.log(nif, username, email, hash, now, null)
-                    if (err) {
-                        console.log(err)
-                        return res.status(500).json({
-                            status_code: 500,
-                            message: err.message,
+            switch (type) {
+                case "comprador":
+                    query_user_type = 'INSERT INTO comprador (morada, users_nif ) VALUES ($1, $2)'
+                    break;
+                case "vendedor":
+                    query_user_type = 'INSERT INTO vendedor (users_nif) VALUES ($1)'
+                    break;
+                case "administrador":
+                    query_user_type = 'INSERT INTO administrador (users_nif) VALUES ($1)'
+                    break;
+                default:
+                    //code doesnt reach here
+                    console.log("already checked if type is valid. this shouldnt happen")
+                    return res.status(400).json({
+                        status_code: 400,
+                        errors: "User type invalid. It must be 'comprador', 'vendedor' or 'administrador'"
+                    })
+            }
+
+
+            let result;
+            try {
+                await client.query('BEGIN')
+                result = await client.query(query_deafault_user, [nif, username, email, hash, now, null])
+
+                if (type === "comprador") {
+                    await client.query(query_user_type, [morada, nif])
+                }
+                else {
+                    await client.query(query_user_type, [nif])
+                }
+                await client.query('COMMIT')
+
+            } catch (error) {
+                console.log("Error, Rollbacking...")
+                console.log(error)
+
+                result = []
+                await client.query('ROLLBACK')
+                return res.status(500).json({
+                    status_code: 500,
+                    message: "Roolbacked: " + error.message,
+                });
+
+            } finally {
+                //console.log(nif, username, email, hash, now, null)
+                if (result.rows) { //to prevent node throwing a error: "cant read property 'length' of undefined"
+                    if (result.rows.length > 0) {
+
+                        const user = result.rows[0];
+                        return res.status(201).json({
+                            status_code: 201,
+                            message: "User registered successfully!",
+                            result: {
+                                nif: user.nif,
+                                username: user.username,
+                                email: user.email,
+                                type: type,
+                            }
                         });
                     }
-                    const user = result.rows[0];
-                    console.log(user)
-                    return res.status(200).json({
-                        status_code: 200,
-                        message: "User registered successfully!",
-                        results: {
-                            nif: user.nif,
-                            username: user.username,
-                            email: user.email,
-                        }
-                    });
-                });
+                    else {
+                        return res.status(500).json({
+                            status_code: 500,
+                            message: "Error. User not created",
+                        });
+                    }
+                }
+
+            }
         }
-    })
+    });
+
+
 }
 
 exports.login = (req, res) => {
     const { username, password } = req.body;
 
     /* example of request body
+
     {
         "username": "something",
         "password": "something_secret"
     }
+    
     */
 
     //check if each field exits first
     if (!username || !password) {
         return res.status(400).json({
             status_code: 400,
-            errors: "Missing fields.",
+            errors: "Missing fields. Username and password are required!",
         });
     }
 
@@ -148,8 +284,7 @@ exports.login = (req, res) => {
         SELECT * FROM users WHERE email = $1::text
         UPDATE users SET last_login = $1 WHERE nif = $2 RETURNING nif, username, email
     */
-    client.query('SELECT * FROM users WHERE email = $1::text', [email], (err, result) => {
-        console.log(result)
+    client.query('SELECT * FROM users WHERE username = $1::text', [username], (err, result) => {
 
         if (err) {
             console.log(err)
@@ -164,7 +299,7 @@ exports.login = (req, res) => {
                 status_code: 400,
                 errors: "User does not exist!",
             });
-        } else {
+        } else if (result.rows.length === 1) {
             // check if password is correct
             const user = result.rows[0];
             bcrypt.compare(password, user.password).then(isValid => {
@@ -184,7 +319,6 @@ exports.login = (req, res) => {
                                     errors: err.message,
                                 });
                             }
-                            console.log(token)
 
                             // update last login
                             client.query(
@@ -198,7 +332,7 @@ exports.login = (req, res) => {
                                             errors: err.message,
                                         });
                                     }
-                                    console.log(result.rows)
+                                    // console.log(result.rows)
                                     return res.status(200).json({
                                         status_code: 200,
                                         message: "User logged in successfully!",
@@ -220,9 +354,17 @@ exports.login = (req, res) => {
                 } else {
                     return res.status(400).json({
                         status_code: 400,
-                        errors: "Password is incorrect!",
+                        errors: "Username or password is incorrect!",
                     });
                 }
+            });
+        }
+        else {
+            //this shouldnt happen since username is unique
+            console.log("More than one user with same username!")
+            return res.status(500).json({
+                status_code: 500,
+                errors: "Error. User not created",
             });
         }
     })

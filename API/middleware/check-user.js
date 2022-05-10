@@ -16,9 +16,8 @@ module.exports = (req, res, next) => {
         }
 
         const tokenheader = req.headers.authorization;
-        const token = tokenheader.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log(decoded)
+        const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
+        console.log("middlware decode: ", decoded);
         req.userData = decoded;
         next();
     } catch (error) {
