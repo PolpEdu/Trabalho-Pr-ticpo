@@ -3,7 +3,7 @@ const app = express();
 const bodyParser = require("body-parser");
 require("dotenv").config();
 const session = require("express-session");
-const client = require('./API/connection.js')
+const client = require('./API/utils/connection');
 
 client.connect().catch(e => {
   console.error('connection error', e.stack)

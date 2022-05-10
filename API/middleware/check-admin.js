@@ -1,5 +1,8 @@
+// ! Pagina que verifica se o user esta logged in !
+
 const jwt = require("jsonwebtoken");
-const TokenNotFound = require("../utils/errors");
+const client = require('../utils/connection')
+
 
 module.exports = (req, res, next) => {
     try {
@@ -8,28 +11,47 @@ module.exports = (req, res, next) => {
             req.headers.authorization === undefined
         ) {
             console.log("Desculpa algo correu mal, não estas logged in!");
-            throw new TokenNotFound();
+            return res.status(401).json({
+                status: 401,
+                error: "Something went wrong, you are not logged in!",
+            });
         }
 
         const tokenheader = req.headers.authorization;
-        const token = tokenheader.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log(decoded)
+        const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
         req.userData = decoded;
-        next();
-    } catch (error) {
-        let msg;
-        if (error instanceof TokenNotFound) {
-            msg = "Something went wrong, you are not logged in!";
-        } else if (error instanceof TypeError) {
-            msg = "Something went wrong, token is invalid!";
+        if (decoded) {
+
+            client.query(`SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador WHERE users_nif = '${decoded.nif}') THEN true ELSE false END AS exists`, (err, result) => {
+                if (err) {
+                    console.log("err: ", err);
+                    return res.status(401).json({
+                        status: 401,
+                        error: "Something went wrong, couldn't verify user.",
+                    });
+                }
+                if (result.rows[0].exists == true) {
+                    console.log("Admin logged in!");
+                    next();
+                }
+                else {
+                    return res.status(401).json({
+                        status: 401,
+                        error: "Something went wrong, token doesn't match any user.",
+                    });
+                }
+            });
         } else {
-            console.log(error);
-            msg = error.message;
+            return res.status(401).json({
+                status: 401,
+                error: "Something went wrong, token is invalid!",
+            });
         }
-        res.status(401).json({
+    } catch (error) {
+        console.log(error);
+        return res.status(401).json({
             status: 401,
-            errors: msg,
+            error: error,
         });
     }
 };

@@ -1,7 +1,6 @@
 // ! Pagina que verifica se o user esta logged in !
 
 const jwt = require("jsonwebtoken");
-//import tokennotfound error fro merror.js
 const client = require('../utils/connection')
 
 
@@ -20,36 +19,29 @@ module.exports = (req, res, next) => {
 
         const tokenheader = req.headers.authorization;
         const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
+        const nif = parseInt(decoded.nif);
         req.userData = decoded;
-
-        console.log(decoded);
         if (decoded) {
-            client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM users WHERE nif = $1) THEN true ELSE false END AS exists', [decoded.nif], (err, result) => {
+            client.query(`SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador, vendedor WHERE administrador.users_nif = '${nif}' OR vendedor.users_nif = '${nif}') THEN true ELSE false END AS exists`, (err, result) => {
                 if (err) {
-                    console.log("err: ", err);
+                    console.log(err);
                     return res.status(401).json({
                         status: 401,
                         error: "Something went wrong, couldn't verify user.",
                     });
                 }
-                console.log("result: ", result.rows[0].exists);
                 if (result.rows[0].exists == true) {
+                    console.log("Comprador logged in");
                     next();
                 } else {
                     return res.status(401).json({
                         status: 401,
-                        error: "Something went wrong, token doesn't match any user.",
+                        error: "Something went wrong, token doesn't match any administrator.",
                     });
                 }
             });
 
-
-        } else {
-            return res.status(401).json({
-                status: 401,
-                error: "Something went wrong, token is invalid!",
-            });
-        }
+        };
     } catch (error) {
         console.log(error);
         return res.status(401).json({
@@ -57,4 +49,4 @@ module.exports = (req, res, next) => {
             error: error,
         });
     }
-};
+}

@@ -1,4 +1,4 @@
-const client = require('../connection.js')
+const client = require('../utils/connection.js')
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 
@@ -69,7 +69,6 @@ exports.signup = async (req, res) => {
                 console.log("isadmin: " + result.rows[0].isadmin)
                 //! validate if user permissions corresponds to the type of user being created
                 if (result.rows[0].isadmin === false && type !== "comprador") {
-                    console.log("yo")
                     return res.status(400).json({
                         status: 400,
                         errors: "You don't have permissions to create a user of type: " + type,
@@ -214,8 +213,6 @@ exports.signup = async (req, res) => {
                     query_user_type = 'INSERT INTO administrador (users_nif) VALUES ($1)'
                     break;
                 default:
-                    //code doesnt reach here
-                    console.log("already checked if type is valid. this shouldnt happen")
                     return res.status(400).json({
                         status_code: 400,
                         errors: "User type invalid. It must be 'comprador', 'vendedor' or 'administrador'"
