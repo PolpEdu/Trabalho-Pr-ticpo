@@ -11,7 +11,7 @@ module.exports = (req, res, next) => {
             req.headers.authorization === null ||
             req.headers.authorization === undefined
         ) {
-            console.log("Desculpa algo correu mal, não estas logged in!");
+            console.log("Desculpa algo correu mal, não estas logged in! No token presented.");
             return res.status(401).json({
                 status: 401,
                 error: "Something went wrong, you are not logged in!",
@@ -22,7 +22,6 @@ module.exports = (req, res, next) => {
         const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
         req.userData = decoded;
 
-        console.log(decoded);
         if (decoded) {
             client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM users WHERE nif = $1) THEN true ELSE false END AS exists', [decoded.nif], (err, result) => {
                 if (err) {
@@ -32,7 +31,7 @@ module.exports = (req, res, next) => {
                         error: "Something went wrong, couldn't verify user.",
                     });
                 }
-                console.log("result: ", result.rows[0].exists);
+                console.log("Did the token match any user? ", result.rows[0].exists);
                 if (result.rows[0].exists == true) {
                     next();
                 } else {

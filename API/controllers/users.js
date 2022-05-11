@@ -58,7 +58,6 @@ exports.signup = async (req, res) => {
         try {
             const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET)
             const userNIF = decoded.nif
-            console.log(userNIF)
             // assign the user to his type located in other tables
 
             //there is 3 tables that inherit from users
@@ -66,7 +65,7 @@ exports.signup = async (req, res) => {
             //check if user is administrador
             try {
                 let result = await client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador WHERE users_nif = $1) THEN true ELSE false END AS isadmin', [userNIF])
-                console.log("isadmin: " + result.rows[0].isadmin)
+                console.log("Client tried to signup. Is he admin: " + result.rows[0].isadmin)
                 //! validate if user permissions corresponds to the type of user being created
                 if (result.rows[0].isadmin === false && type !== "comprador") {
                     return res.status(400).json({

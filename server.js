@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 require("dotenv").config();
 const session = require("express-session");
 const client = require('./API/utils/connection');
+const inserfakesuperUser = require('./API/utils/fakeusers');
 
 client.connect().catch(e => {
   console.error('connection error', e.stack)
@@ -43,6 +44,19 @@ app.use(
 app.set('port', process.env.PORT || 8080);
 app.listen(app.get('port'), function () {
   console.log('Express server listening on port ' + app.get('port'));
+
+  // to simply tests, API on initiate always has a superuser with nif 9999999
+  inserfakesuperUser();
+  /*
+  to login with this super user:
+  {
+    "username": "superuser",
+    "password": "sad"
+  }
+  */
+
+
+
 });
 
 app.use(function (req, res, next) {

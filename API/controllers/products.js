@@ -70,25 +70,23 @@ exports.registerproduct = async (req, res) => {
         const result = await client.query(
             `SELECT CASE WHEN EXISTS(SELECT 1 FROM products WHERE name = $1) THEN true ELSE false END AS isproduct`, [name]
         );
-        //TODO: erro aqui
         if (result.rows[0].isproduct === true) {
             return res.status(400).json({
                 status: 400,
                 errors: 'Product with name: ' + name + ' already exists',
             });
         } else {
-            //todo begin transaction and insert the product into his type, to his specs, to his empresa_produtora along with the stock
+
             let result2;
+            let result;
             try {
                 await client.query('BEGIN')
-                const result = await client.query(query_deafault_product, [name, price, description])
-                console.log("result first product query::" + result.rows[0])
+                result = await client.query(query_deafault_product, [name, price, description])
                 const product_id = result.rows[0].id
 
-                result2 = await client.query(query_product_type, [product_id])
-                console.log(result2.rows[0])
-                await client.query('COMMIT')
 
+                result2 = await client.query(query_product_type, [product_id])
+                await client.query('COMMIT')
 
             } catch (err) {
                 console.log("error. Rollbacking..." + err.message)
@@ -100,17 +98,22 @@ exports.registerproduct = async (req, res) => {
             } finally {
                 if (result2.rows) { //to prevent node throwing a error: "cant read property 'length' of undefined"
                     if (result2.rows.length > 0) {
+                        //if we have a product id in result2, we returned the product id so the transaction was successfully committed
+                        const result_product = {
+                            product_id: parseInt(result2.rows[0].products_id),
+                            name: result.rows[0].name,
+                            price: parseInt(result.rows[0].price),
+                            description: result.rows[0].description,
+                        }
 
-                        const product = result2.rows[0];
+                        console.log("Product registered successfully: ");
+                        console.log(result_product);
+
+
                         return res.status(201).json({
                             status_code: 201,
-                            message: "User registered successfully!",
-                            result: {
-                                product_id: product.id,
-                                name: product.name,
-                                price: product.price,
-                                description: product.description,
-                            }
+                            message: "User registered Product successfully!",
+                            result: result_product
                         });
                     }
                     else {
@@ -131,6 +134,27 @@ exports.registerproduct = async (req, res) => {
             errors: "Couldn't fetch products: " + error.message,
         });
     }
+
+
+}
+
+
+exports.updateproduct = async (req, res) => {
+    /* Example:
+    {
+        “description”: "new description",
+        “price”: 1234567,
+        (and other fields)
+    }
+    */
+    const { id } = req.params;
+
+    // get all the objects from the body
+
+
+
+
+
 
 
 }

@@ -31,7 +31,7 @@ module.exports = (req, res, next) => {
                     });
                 }
                 if (result.rows[0].exists == true) {
-                    console.log("Comprador logged in");
+                    console.log("Vendedour ou Administrator logged in");
                     next();
                 } else {
                     return res.status(401).json({
