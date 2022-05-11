@@ -10,7 +10,7 @@ CREATE TABLE users (nif BIGINT UNIQUE NOT NULL,
 CREATE TABLE products (name varchar(512) UNIQUE NOT NULL,
                                                 price BIGINT NOT NULL,
                                                              description varchar(512),
-                                                                         id BIGINT UNIQUE NOT NULL,
+                                                                         id SERIAL UNIQUE not null,
                                                                                           version BIGINT NOT NULL DEFAULT 1,
                                                                                                                           PRIMARY KEY(id));
 
