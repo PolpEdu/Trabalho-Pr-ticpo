@@ -140,16 +140,18 @@ exports.registerproduct = async (req, res) => {
 
 
 exports.updateproduct = async (req, res) => {
-    /* Example:
+    /* Example, in the body of the request there is the fields that we want to update:
     {
         “description”: "new description",
         “price”: 1234567,
-        (and other fields)
+        (and other fields if we want to update them)
     }
     */
     const { id } = req.params;
 
+
     // get all the objects from the body
+
 
 
 

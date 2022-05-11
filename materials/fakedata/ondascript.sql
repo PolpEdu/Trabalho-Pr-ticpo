@@ -1,3 +1,7 @@
+--important things from onda to the actual script:
+--1. change TEXT to VARCHAR, CTRL+R to replace IT
+--2. product id from TEXT to SERIAL (it's easier to implement the table like this)
+
 CREATE TABLE users (nif BIGINT UNIQUE NOT NULL,
                                       username VARCHAR(50) NOT NULL,
                                                            password VARCHAR(150) NOT NULL,
