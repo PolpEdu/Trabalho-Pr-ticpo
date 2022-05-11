@@ -222,13 +222,13 @@ exports.signup = async (req, res) => {
             let result;
             try {
                 await client.query('BEGIN')
-                result = await client.query(query_deafault_user, [nif, username, email, hash, now, null])
+                result = await client.query(query_deafault_user, [nif, username, email, hash, now, null]) //insert the user into the default table
 
                 if (type === "comprador") {
-                    await client.query(query_user_type, [morada, nif])
+                    await client.query(query_user_type, [morada, nif]) //insert the user into the specific role table
                 }
                 else {
-                    await client.query(query_user_type, [nif])
+                    await client.query(query_user_type, [nif]) //insert the user into the specific role table
                 }
                 await client.query('COMMIT')
 

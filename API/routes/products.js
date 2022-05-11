@@ -11,7 +11,7 @@ const checkVendedorouAdmin = require('../middleware/check-comprador'); //check w
 
 router.get('/', checkLogin, productsControllers.getproducts)
 router.post('/', checkVendedorouAdmin, productsControllers.registerproduct)
-router.patch('/:id', checkVendedorouAdmin, productsControllers.updateproduct)
+router.put('/:id', checkVendedorouAdmin, productsControllers.updateproduct)
 
 
 

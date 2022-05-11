@@ -23,12 +23,11 @@ exports.registerproduct = async (req, res) => {
     {
         "name": "Product 1", //obrigatório
         "price": 100, // obrigatório
-        "type": "computador", // obrigatório
+        "type": "computadores", // obrigatório -> computadores, smartphones, tablets, televisoes
         "empresa_produtora": 123456789, // obrigatório
         "stock": 10, // obrigatório
 
         "description": "This is a product", // não obrigatório
-        "specs_id": 1, // não obrigatório
     }
     */
     const { type, specs_id, empresa_produtora, name, price, stock, description } = req.body;
@@ -140,21 +139,85 @@ exports.registerproduct = async (req, res) => {
 
 
 exports.updateproduct = async (req, res) => {
-    /* Example, in the body of the request there is the fields that we want to update:
+    /* Example, in the body of the request there is the fields that we want to update: 
     {
+        "name": "Product 1", 
+        "price": 100, 
+        "type": "computadores",
         “description”: "new description",
-        “price”: 1234567,
-        (and other fields if we want to update them)
+        "empresa_produtora": 123456789,
+        "stock": 10,
     }
     */
+    console.log(req.params)
     const { id } = req.params;
+    const { name, description, price, type, empresa_produtora, stock } = req.body;
+
+    if (type) { // first check if we want to change the type of the product, if so we need to change it from the current type table to the new one
+        let query_update_televisoes;
+        let query_update_smartphones;
+        let query_update_computadores;
+
+        console.log("Changing type")
+        //decided to not check if the product is already in the new type table, if it is the query wouldn't change anything....
+        switch (type) {
+            case "televisoes":
+                query_update_televisoes = 'UPDATE televisoes SET products_id = $1 WHERE products_id = $2'
+                query_update_computadores = 'DELETE FROM computadores WHERE products_id = $1'
+                query_update_smartphones = 'DELETE FROM smartphones WHERE products_id = $1'
+                break;
+            case "smartphones":
+                query_update_televisoes = 'DELETE FROM televisoes WHERE products_id = $1'
+                query_update_computadores = 'DELETE FROM computadores WHERE products_id = $1'
+                query_update_smartphones = 'UPDATE smartphones SET products_id = $1 WHERE products_id = $2'
+                break;
+            case "computadores":
+                query_update_televisoes = 'DELETE FROM televisoes WHERE products_id = $1'
+                query_update_computadores = 'UPDATE computadores SET products_id = $1 WHERE products_id = $2'
+                query_update_smartphones = 'DELETE FROM smartphones WHERE products_id = $1'
+                break;
+            default:
+                return res.status(400).json({
+                    status: 400,
+                    errors: "Product type invalid. It must be 'televisoes', 'smartphones' or 'computadores'"
+                });
+        }
+
+        try {
+            await client.query('BEGIN') //needs to be a transaction to avoid errors
+
+            let values_from_product_type = [id, id] // if product is from the query type we need to two ids - For UPDATE query
+            let values_one_argument_id = [id] //if not we only need one id - For DELETE query
+
+            await client.query(query_update_televisoes, type === "televisoes" ? values_from_product_type : values_one_argument_id)
+            await client.query(query_update_smartphones, type === "smartphones" ? values_from_product_type : values_one_argument_id)
+            await client.query(query_update_computadores, type === "computadores" ? values_from_product_type : values_one_argument_id)
+            await client.query('COMMIT')
+        } catch (err) {
+            console.log("error. Rollbacking..." + err.message)
+            await client.query('ROLLBACK')
+            return res.status(500).json({
+                status: 500,
+                errors: "Couldn't change the type of the product: " + err.message,
+            });
+        } finally {
+            //TODO: bug here for some reason.
+            // finnaly is executed even if the transaction is rollbacked for some reason.
+            console.log("Product type changed successfully")
+            return res.status(204).json({
+                status: 204,
+                message: "Product type changed successfully",
+            });
+        }
+
+    } else { //we dont want to change the type
+        console.log("Not changing type")
+
+    }
 
 
-    // get all the objects from the body
 
-
-
-
+    console.log("yo")
 
 
 
