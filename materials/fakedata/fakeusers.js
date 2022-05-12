@@ -10,9 +10,11 @@ function insertfakeusers() {
 
 
     for (let i = 0; i < 3; i++) {
+        let nif = "";
         //generate a integer that contains i 9 times
         for (let j = 0; j < 9; j++) {
-            var nif = i * 9 + j;
+            //add j to the nif
+            nif += j;
         }
         console.log(nif);
         const password = "sad" + i;
@@ -26,7 +28,6 @@ function insertfakeusers() {
             hash, //password: sad
             new Date(),
         ];
-
         //insert into vendedores
         client.query(query_insert_user, values, (err, result) => {
             if (err) {

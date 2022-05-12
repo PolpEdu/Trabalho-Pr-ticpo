@@ -12,21 +12,21 @@ function insertfakedata() {
     const hash = bcrypt.hashSync(password, salt);
 
     const values = [
-        999999999,
+        123456789,
         "superuser",
         "admin@admin.com",
         hash, //sad
         new Date(),
     ];
 
-    //check if user with nif 999999999 already exists
+    //check if user with nif 123456789 already exists
     client.query(`SELECT CASE WHEN EXISTS(SELECT 1 FROM users WHERE nif = '${values[0]}') THEN true ELSE false END AS exists`, (err, result) => {
         if (err) {
             console.log(err);
             return;
         }
         if (result.rows[0].exists) {
-            console.log("Super user already exists.\n\n\n");
+            console.log("Super user already exists.");
             return;
         } else {
             console.log("Default super user doesnt exist. Inserting...");

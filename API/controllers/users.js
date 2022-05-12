@@ -45,7 +45,7 @@ exports.signup = async (req, res) => {
     if (!nif || !username || !email || !password || !type) {
 
         return res.status(400).json({
-            status: 400,
+            status_code: 400,
             errors: "Missing fields.\nFields Required: nif, username, email, password, type",
         });
     }
@@ -69,14 +69,14 @@ exports.signup = async (req, res) => {
                 //! validate if user permissions corresponds to the type of user being created
                 if (result.rows[0].isadmin === false && type !== "comprador") {
                     return res.status(400).json({
-                        status: 400,
+                        status_code: 400,
                         errors: "You don't have permissions to create a user of type: " + type,
                     });
                 }
             } catch (err) {
                 console.log(err)
                 res.status(500).json({
-                    status: 500,
+                    status_code: 500,
                     errors: "Couldn't fetch admins: " + err,
                 });
             }
@@ -85,7 +85,7 @@ exports.signup = async (req, res) => {
             console.warn("Couldn't verify the authenticity of the user, token invalid.")
             if (type !== "comprador") {
                 return res.status(401).json({
-                    status: 401,
+                    status_code: 401,
                     errors: "Couldn't verify the authenticity of the user and you are tring to create an administrador or vendedor. Please Log In again.",
                 });
             }
@@ -107,19 +107,19 @@ exports.signup = async (req, res) => {
         // we can only use if's since we always return inside of the conditions
         if (type === "comprador" && !morada) {
             return res.status(400).json({
-                status: 400,
+                status_code: 400,
                 errors: "Missing fields. Fields Required: morada (type is comprador)",
             });
         }
         if (type === "comprador" && morada.length < 5) {
             return res.status(400).json({
-                status: 400,
+                status_code: 400,
                 errors: "Invalid morada. morada must be at least 5 chars",
             });
         }
         if (type !== "comprador" && type !== "vendedor" && type !== "administrador") {
             return res.status(400).json({
-                status: 400,
+                status_code: 400,
                 errors: "User type invalid. It must be 'comprador', 'vendedor' or 'administrador'"
             })
         }
@@ -244,7 +244,6 @@ exports.signup = async (req, res) => {
                 });
 
             } finally {
-                //console.log(nif, username, email, hash, now, null)
                 if (result.rows) { //to prevent node throwing a error: "cant read property 'length' of undefined"
                     if (result.rows.length > 0) {
 

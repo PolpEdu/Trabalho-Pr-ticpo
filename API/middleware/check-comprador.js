@@ -12,7 +12,7 @@ module.exports = (req, res, next) => {
         ) {
             console.log("Desculpa algo correu mal, não estas logged in!");
             return res.status(401).json({
-                status: 401,
+                status_code: 401,
                 error: "Something went wrong, you are not logged in!",
             });
         }
@@ -26,7 +26,7 @@ module.exports = (req, res, next) => {
                 if (err) {
                     console.log(err);
                     return res.status(401).json({
-                        status: 401,
+                        status_code: 401,
                         error: "Something went wrong, couldn't verify user.",
                     });
                 }
@@ -35,7 +35,7 @@ module.exports = (req, res, next) => {
                     next();
                 } else {
                     return res.status(401).json({
-                        status: 401,
+                        status_code: 401,
                         error: "Something went wrong, token doesn't match any administrator.",
                     });
                 }
@@ -45,7 +45,7 @@ module.exports = (req, res, next) => {
     } catch (error) {
         console.log(error);
         return res.status(401).json({
-            status: 401,
+            status_code: 401,
             error: error,
         });
     }

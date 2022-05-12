@@ -18,6 +18,7 @@ const userRoutes = require("./API/routes/users");
 const productRoutes = require("./API/routes/products");
 
 const cors = require("cors");
+const insertfakeEmpresas = require("./API/utils/fakeempresas");
 const corsOptions = {
   origin: '*',
   credentials: true,            //access-control-allow-credentials:true
@@ -54,6 +55,8 @@ app.listen(app.get('port'), function () {
     "password": "sad"
   }
   */
+
+  insertfakeEmpresas();
 
 
 
