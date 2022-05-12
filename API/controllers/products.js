@@ -99,10 +99,10 @@ exports.registerproduct = async (req, res) => {
             result2 = await client.query(query_product_type, [product_id])
             result_stocks = await client.query(query_stock_products, [stock, nif_empresa_produtora, product_id])
 
-            const result_old_prod = await client.query('INSERT INTO old_products (name, price, description, date_added) VALUES ($1, $2, $3, $4) RETURNING id', [name, price, description, new Date()])
+            /*const result_old_prod = await client.query('INSERT INTO old_products (name, price, description, date_added) VALUES ($1, $2, $3, $4) RETURNING id', [name, price, description, new Date()])
             const old_prod_id = result_old_prod.rows[0].id
             //insert into versions table
-            await client.query('INSERT INTO old_product_versions (products_id, version, old_products_id) VALUES ($1, $2, $3)', [product_id, 0, old_prod_id])
+            await client.query('INSERT INTO old_product_versions (products_id, version, old_products_id) VALUES ($1, $2, $3)', [product_id, 0, old_prod_id])*/
 
 
             await client.query('COMMIT')
@@ -253,12 +253,14 @@ exports.updateproduct = async (req, res) => {
         await client.query('BEGIN')
         const new_product_updated = await client.query(query_update_product, update_object)
         const old_product_updated = await client.query(query_new_old_object, old_product_object)
+
+        let version = current_version.rows[0] ? parseInt(current_version.rows[0].version) + 1 : 1
+        const old_product_versions_updated = await client.query(query_old_product_versions, [version, old_product_updated.rows[0].id, new_product_updated.rows[0].id])
         /*console.log("old product updated: ")
         console.log(old_product_updated.rows[0])
         console.log("new product updated: ")
         console.log(new_product_updated.rows[0])*/
 
-        const connect_version_to_id = await client.query(query_old_product_versions, [parseInt(current_version.rows[0].version) + 1, old_product_updated.rows[0].id, new_product_updated.rows[0].id])
         //check if empresa exists to throw an error if it doesn't
         if (empresa_produtora) {
             let result_empresa = await client.query(query_exists_empresa, [empresa_produtora])
@@ -287,7 +289,6 @@ exports.updateproduct = async (req, res) => {
         console.log(old_product)
         console.log("new product: ")
         console.log(new_product)
-        console.log(connect_version_to_id.rows[0])
 
         await client.query('COMMIT')
 
@@ -330,7 +331,7 @@ exports.getproduct = (req, res) => {
             })
         }
         //query the old products and add to the result all previous versions
-        const query_get_old_products = 'SELECT old_products_id FROM old_product_versions WHERE products_id = $1 ORDER BY old_product_versions DESC'
+        const query_get_old_products = 'SELECT old_products_id FROM old_product_versions WHERE products_id = $1 ORDER BY old_product_versions ASC'
         try {
             //all previous versions numbers
             const old_prod_res = await client.query(query_get_old_products, values);
@@ -338,7 +339,7 @@ exports.getproduct = (req, res) => {
             console.log(all_versions)
 
             // query all the old_products with the previous versions
-            const query_get_old_products_with_versions = 'SELECT * FROM old_products WHERE id = ANY($1)'
+            const query_get_old_products_with_versions = 'SELECT * FROM old_products WHERE id = ANY($1) ORDER BY id DESC'
             const old_products = await client.query(query_get_old_products_with_versions, [all_versions])
             console.log(old_products.rows)
             latest_versions = old_products.rows
@@ -352,11 +353,16 @@ exports.getproduct = (req, res) => {
             })
         }
 
-
+        const { name, price, description, id } = result.rows[0]
         return res.status(200).json({
             status_code: 200,
             message: "Product fetched successfully!",
-            product: result.rows[0],
+            product: {
+                name: name,
+                price: price,
+                description: description,
+                main_product_id: id,
+            },
             latest_versions: latest_versions
         })
     })

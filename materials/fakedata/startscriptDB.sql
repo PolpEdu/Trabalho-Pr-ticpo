@@ -6,12 +6,54 @@
  --5. resposta_id from big integer to SERIAL (it's easier to implement the table like this)
  --6. order_id from big integer to SERIAL (it's easier to implement the table like this)
  --7. old product id from big integer to SERIAL (it's easier to implement the table like this)
+ -- create a procedure to make orders: CALL order(nif, id_produto, quantidade);
+/*
+I usually end my procedures with COMMIT and when an error occurs I use ROLLBACK! Is it wrong? Wrong is a strong word. Let's just say it's not a good practice. Making (packaged) functions and procedures is all about modularization: making reusable pieces of code. When a function/procedure contains ROLLBACK or COMMIT statements, it stops being reusable as it messes up the transaction of the caller. So it's better not to use ROLLBACK or COMMIT in your procedures
+and leave it to the topmost caller.
+*/ --TODO: needs testing this procedure
+ 
+CREATE or replace procedure orderEXEC(nif orders.users_nif%type, idprod products.id%type,qnt stock_product.stock%type, statusOrder orders.status%type) LANGUAGE plpgsql AS $$
+DECLARE
+      new_order_id orders.order_id%type;
+BEGIN
+      -- check if the product exists
+      IF NOT EXISTS (SELECT * FROM products WHERE id = idprod) THEN
+            RAISE EXCEPTION 'Product does not exist';
+      END IF;
+      -- check if the user exists
+      IF NOT EXISTS (SELECT * FROM users WHERE nif = nif) THEN
+            RAISE EXCEPTION 'User does not exist';
+      END IF;
+
+      -- check if the stock in stock_product table is greater than the quantity ordered
+      IF NOT EXISTS (SELECT * FROM stock_product WHERE products_id = idprod AND stock >= qnt) THEN
+            RAISE EXCEPTION 'Not enough stock';
+      END IF;
+
+      -- update the stock in stock_product table
+      UPDATE stock_product SET stock = stock - qnt WHERE products_id = idprod;
+
+      --create a new order and return his id
+      INSERT INTO orders (users_nif, status, order_date)VALUES (nif, statusOrder, now()) RETURNING id INTO new_order_id;
+
+      -- create a new compra_product
+      INSERT INTO compra_product (quantidade, preco, orders_order_id, products_id) VALUES (qnt,
+      (SELECT preco FROM products WHERE id = idprod),
+      new_order_id,
+      idprod);
+
+END;
+$$;
+
+-- call it like: CALL orderEXEC(nif, idprod, qnt, statusOrder);
+ --delete all tables
 
 DROP SCHEMA public CASCADE;
 
 
 CREATE SCHEMA public;
 
+--start to creating tables:
 
 CREATE TABLE users (nif BIGINT UNIQUE NOT NULL,
                                       username VARCHAR(50) UNIQUE NOT NULL,
@@ -44,7 +86,8 @@ CREATE TABLE empresas (nif BIGINT, nome VARCHAR(512) NOT NULL,
 CREATE TABLE orders (order_id SERIAL, order_date DATE NOT NULL,
                                                       status VARCHAR(512),
                                                              preco_total FLOAT(8),
-                                                                         PRIMARY KEY(order_id));
+                                                                         users_nif BIGINT NOT NULL,
+                                                                                          PRIMARY KEY(order_id));
 
 
 CREATE TABLE rating (comment VARCHAR(512),
@@ -125,10 +168,6 @@ CREATE TABLE notificacoes_reply (notificacoes_id BIGINT, reply_resposta_id BIGIN
 CREATE TABLE vendedor_empresas (vendedor_users_nif BIGINT, empresas_nif BIGINT, PRIMARY KEY(vendedor_users_nif,empresas_nif));
 
 
-CREATE TABLE comprador_orders (comprador_users_nif BIGINT NOT NULL,
-                                                          orders_order_id BIGINT, PRIMARY KEY(orders_order_id));
-
-
 CREATE TABLE notificacoes_thread (notificacoes_id BIGINT, thread_id BIGINT NOT NULL,
                                                                            PRIMARY KEY(notificacoes_id));
 
@@ -143,6 +182,10 @@ CREATE TABLE reply_reply (reply_resposta_id BIGINT, reply_resposta_id1 BIGINT NO
 
 ALTER TABLE specification ADD CONSTRAINT specification_fk1
 FOREIGN KEY (products_id) REFERENCES products(id);
+
+
+ALTER TABLE orders ADD CONSTRAINT orders_fk1
+FOREIGN KEY (users_nif) REFERENCES users(nif);
 
 
 ALTER TABLE rating ADD CONSTRAINT rating_fk1
@@ -239,14 +282,6 @@ FOREIGN KEY (vendedor_users_nif) REFERENCES vendedor(users_nif);
 
 ALTER TABLE vendedor_empresas ADD CONSTRAINT vendedor_empresas_fk2
 FOREIGN KEY (empresas_nif) REFERENCES empresas(nif);
-
-
-ALTER TABLE comprador_orders ADD CONSTRAINT comprador_orders_fk1
-FOREIGN KEY (comprador_users_nif) REFERENCES comprador(users_nif);
-
-
-ALTER TABLE comprador_orders ADD CONSTRAINT comprador_orders_fk2
-FOREIGN KEY (orders_order_id) REFERENCES orders(order_id);
 
 
 ALTER TABLE notificacoes_thread ADD CONSTRAINT notificacoes_thread_fk1

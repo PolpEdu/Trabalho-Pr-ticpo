@@ -29,7 +29,8 @@ CREATE TABLE empresas (nif BIGINT, nome VARCHAR(512) NOT NULL,
 CREATE TABLE orders (order_id SERIAL, order_date DATE NOT NULL,
                                                       status VARCHAR(512),
                                                              preco_total FLOAT(8),
-                                                                         PRIMARY KEY(order_id));
+                                                                         users_nif BIGINT NOT NULL,
+                                                                                          PRIMARY KEY(order_id));
 
 
 CREATE TABLE rating (comment VARCHAR(512),
@@ -110,10 +111,6 @@ CREATE TABLE notificacoes_reply (notificacoes_id BIGINT, reply_resposta_id BIGIN
 CREATE TABLE vendedor_empresas (vendedor_users_nif BIGINT, empresas_nif BIGINT, PRIMARY KEY(vendedor_users_nif,empresas_nif));
 
 
-CREATE TABLE comprador_orders (comprador_users_nif BIGINT NOT NULL,
-                                                          orders_order_id BIGINT, PRIMARY KEY(orders_order_id));
-
-
 CREATE TABLE notificacoes_thread (notificacoes_id BIGINT, thread_id BIGINT NOT NULL,
                                                                            PRIMARY KEY(notificacoes_id));
 
@@ -128,6 +125,10 @@ CREATE TABLE reply_reply (reply_resposta_id BIGINT, reply_resposta_id1 BIGINT NO
 
 ALTER TABLE specification ADD CONSTRAINT specification_fk1
 FOREIGN KEY (products_id) REFERENCES products(id);
+
+
+ALTER TABLE orders ADD CONSTRAINT orders_fk1
+FOREIGN KEY (users_nif) REFERENCES users(nif);
 
 
 ALTER TABLE rating ADD CONSTRAINT rating_fk1
@@ -224,14 +225,6 @@ FOREIGN KEY (vendedor_users_nif) REFERENCES vendedor(users_nif);
 
 ALTER TABLE vendedor_empresas ADD CONSTRAINT vendedor_empresas_fk2
 FOREIGN KEY (empresas_nif) REFERENCES empresas(nif);
-
-
-ALTER TABLE comprador_orders ADD CONSTRAINT comprador_orders_fk1
-FOREIGN KEY (comprador_users_nif) REFERENCES comprador(users_nif);
-
-
-ALTER TABLE comprador_orders ADD CONSTRAINT comprador_orders_fk2
-FOREIGN KEY (orders_order_id) REFERENCES orders(order_id);
 
 
 ALTER TABLE notificacoes_thread ADD CONSTRAINT notificacoes_thread_fk1

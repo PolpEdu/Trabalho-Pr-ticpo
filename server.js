@@ -16,6 +16,7 @@ client.connect().catch(e => {
 
 const userRoutes = require("./API/routes/users");
 const productRoutes = require("./API/routes/products");
+const orderRoutes = require("./API/routes/orders");
 
 const cors = require("cors");
 const insertfakeEmpresas = require("./API/utils/fakeempresas");
@@ -32,6 +33,7 @@ app.use(bodyParser.json());
 
 app.use("/dbproj/product", productRoutes);
 app.use("/dbproj/user", userRoutes);
+app.use("/dbproj/order", orderRoutes);
 
 app.use(
   session({
