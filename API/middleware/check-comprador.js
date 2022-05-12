@@ -22,7 +22,8 @@ module.exports = (req, res, next) => {
         const nif = parseInt(decoded.nif);
         req.userData = decoded;
         if (decoded) {
-            client.query(`SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador, vendedor WHERE administrador.users_nif = '${nif}' OR vendedor.users_nif = '${nif}') THEN true ELSE false END AS exists`, (err, result) => {
+            //check if nif exists in users_nif from tables administrador or vendedor
+            client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM administrador AS admin WHERE admin.users_nif = $1) THEN 1 ELSE 0 END AS admin, CASE WHEN EXISTS(SELECT 1 FROM vendedor AS vend WHERE vend.users_nif = $2) THEN 1 ELSE 0 END AS vend', [nif, nif], (err, result) => {
                 if (err) {
                     console.log(err);
                     return res.status(401).json({
@@ -30,8 +31,9 @@ module.exports = (req, res, next) => {
                         error: "Something went wrong, couldn't verify user.",
                     });
                 }
-                if (result.rows[0].exists == true) {
-                    console.log("Vendedour ou Administrator logged in");
+                //console.log("is adm? " + result.rows[0].admin);
+                //console.log("is vend? " + result.rows[0].vend);
+                if (result.rows[0].admin == true || result.rows[0].vend == true) {
                     next();
                 } else {
                     return res.status(401).json({

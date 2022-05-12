@@ -45,10 +45,11 @@ async function insertfakeEmpresas() {
                 console.log("erro");
                 return;
             }
-            console.log("Fake empresas inserted.");
             //console.log(result.rows[0]);
         });
     }
+    console.log("Fake empresas inserted.");
+
 }
 
 module.exports = insertfakeEmpresas;

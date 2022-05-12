@@ -325,7 +325,7 @@ exports.login = (req, res) => {
                         nif: user.nif,
                         username: user.username,
                         email: user.email,
-                    }, process.env.JWT_SECRET, { expiresIn: '1h' },
+                    }, process.env.JWT_SECRET, { expiresIn: '5h' }, //todo: change this to 1hr
                         (err, token) => {
                             if (err) {
                                 console.log(err)

@@ -19,6 +19,8 @@ module.exports = (req, res, next) => {
 
         const tokenheader = req.headers.authorization;
         const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
+        console.log("Admin connected: ");
+        console.log(decoded);
         req.userData = decoded;
         if (decoded) {
 

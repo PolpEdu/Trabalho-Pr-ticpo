@@ -1,67 +1,72 @@
 --important things from onda to the actual script:
---1. change TEXT to VARCHAR, CTRL+R to replace IT
- --2. product id from TEXT to SERIAL (it's easier to implement the table like this)
- --3. notification id from TEXT to SERIAL (it's easier to implement the table like this)
- --4. thread id from TEXT to SERIAL (it's easier to implement the table like this)
- --5. resposta_id from TEXT to SERIAL (it's easier to implement the table like this)
+--1. change text to VARCHAR, CTRL+R to replace IT
+ --2. product id from big integer to SERIAL (it's easier to implement the table like this)
+ --3. notification id from big integer to SERIAL (it's easier to implement the table like this)
+ --4. thread id from big integer to SERIAL (it's easier to implement the table like this)
+ --5. resposta_id from big integer to SERIAL (it's easier to implement the table like this)
+ --6. order_id from big integer to SERIAL (it's easier to implement the table like this)
+ --7. old product id from big integer to SERIAL (it's easier to implement the table like this)
+
+DROP SCHEMA public CASCADE;
+
+
+CREATE SCHEMA public;
+
 
 CREATE TABLE users (nif BIGINT UNIQUE NOT NULL,
-                                      username VARCHAR(50) NOT NULL,
-                                                           password VARCHAR(150) NOT NULL,
-                                                                                 email VARCHAR(50) UNIQUE NOT NULL,
-                                                                                                          created_on TIMESTAMP NOT NULL,
-                                                                                                                               last_login TIMESTAMP,
-                                                                                                                                          PRIMARY KEY(nif));
+                                      username VARCHAR(50) UNIQUE NOT NULL,
+                                                                  password VARCHAR(150) NOT NULL,
+                                                                                        email VARCHAR(50) UNIQUE NOT NULL,
+                                                                                                                 created_on TIMESTAMP NOT NULL,
+                                                                                                                                      last_login TIMESTAMP,
+                                                                                                                                                 PRIMARY KEY(nif));
 
 
-CREATE TABLE products (name varchar(512) UNIQUE NOT NULL,
-                                                price BIGINT NOT NULL,
-                                                             description varchar(512),
-                                                                         id SERIAL UNIQUE not null,
-                                                                                          version BIGINT NOT NULL DEFAULT 1,
-                                                                                                                          PRIMARY KEY(id));
+CREATE TABLE products (name VARCHAR(512) UNIQUE NOT NULL,
+                                                price FLOAT(8) NOT NULL,
+                                                               description VARCHAR(512),
+                                                                           id SERIAL, PRIMARY KEY(id));
 
 
 CREATE TABLE specification (name VARCHAR(512) NOT NULL,
-                                              valor_da_spec varchar(512),
+                                              valor_da_spec VARCHAR(512),
                                                             products_id BIGINT, PRIMARY KEY(products_id));
 
 
-CREATE TABLE empresas (nif BIGINT, nome varchar(512) NOT NULL,
-                                                     telefone varchar(512) NOT NULL,
-                                                                           email varchar(512),
+CREATE TABLE empresas (nif BIGINT, nome VARCHAR(512) NOT NULL,
+                                                     telefone VARCHAR(512) NOT NULL,
+                                                                           email VARCHAR(512),
                                                                                  morada VARCHAR(512),
                                                                                         codigo_postal VARCHAR(10),
                                                                                                       PRIMARY KEY(nif));
 
 
-CREATE TABLE orders (order_id BIGINT, order_date DATE NOT NULL,
-                                                      status varchar(512),
+CREATE TABLE orders (order_id SERIAL, order_date DATE NOT NULL,
+                                                      status VARCHAR(512),
                                                              preco_total FLOAT(8),
                                                                          PRIMARY KEY(order_id));
 
 
-CREATE TABLE rating (comment varchar(512),
+CREATE TABLE rating (comment VARCHAR(512),
                              quantity SMALLINT NOT NULL,
                                                products_id BIGINT, users_nif BIGINT, PRIMARY KEY(products_id,users_nif));
 
 
-CREATE TABLE thread (id BIGINT UNIQUE NOT NULL,
-                                      main_pergunta varchar(250) UNIQUE NOT NULL,
-                                                                        time_created DATE NOT NULL,
-                                                                                          description varchar(1024) NOT NULL,
-                                                                                                                    products_id BIGINT NOT NULL,
-                                                                                                                                       users_nif BIGINT NOT NULL,
-                                                                                                                                                        PRIMARY KEY(id));
+CREATE TABLE thread (id SERIAL, main_pergunta VARCHAR(250) UNIQUE NOT NULL,
+                                                                  time_created DATE NOT NULL,
+                                                                                    description VARCHAR(1024) NOT NULL,
+                                                                                                              products_id BIGINT NOT NULL,
+                                                                                                                                 users_nif BIGINT NOT NULL,
+                                                                                                                                                  PRIMARY KEY(id));
 
 
-CREATE TABLE reply (resposta_id BIGINT UNIQUE NOT NULL, varchar VARCHAR(1024) NOT NULL,
-                                                                              thread_id BIGINT NOT NULL,
-                                                                                               users_nif BIGINT NOT NULL,
-                                                                                                                PRIMARY KEY(resposta_id));
+CREATE TABLE reply (resposta_id SERIAL, varchar VARCHAR(1024) NOT NULL,
+                                                              thread_id BIGINT NOT NULL,
+                                                                               users_nif BIGINT NOT NULL,
+                                                                                                PRIMARY KEY(resposta_id));
 
 
-CREATE TABLE notificacoes (id BIGINT, mensagem VARCHAR(512),
+CREATE TABLE notificacoes (id SERIAL, mensagem VARCHAR(512),
                                                aberta BOOL,
                                                title VARCHAR(64),
                                                      users_nif BIGINT NOT NULL,
@@ -72,7 +77,7 @@ CREATE TABLE administrador (users_nif BIGINT UNIQUE NOT NULL,
                                                     PRIMARY KEY(users_nif));
 
 
-CREATE TABLE comprador (morada varchar(512) NOT NULL,
+CREATE TABLE comprador (morada VARCHAR(512) NOT NULL,
                                             users_nif BIGINT UNIQUE NOT NULL,
                                                                     PRIMARY KEY(users_nif));
 
@@ -99,6 +104,18 @@ CREATE TABLE smartphones (products_id BIGINT UNIQUE NOT NULL,
 
 CREATE TABLE televisoes (products_id BIGINT UNIQUE NOT NULL,
                                                    PRIMARY KEY(products_id));
+
+
+CREATE TABLE old_products (name VARCHAR(512) NOT NULL,
+                                             price INTEGER NOT NULL,
+                                                           description VARCHAR(2048),
+                                                                       date_added DATE NOT NULL,
+                                                                                       id SERIAL, PRIMARY KEY(id));
+
+
+CREATE TABLE old_product_versions (version BIGINT NOT NULL,
+                                                  old_products_id BIGINT NOT NULL,
+                                                                         products_id BIGINT NOT NULL);
 
 
 CREATE TABLE notificacoes_reply (notificacoes_id BIGINT, reply_resposta_id BIGINT NOT NULL,
@@ -197,6 +214,14 @@ FOREIGN KEY (products_id) REFERENCES products(id);
 
 
 ALTER TABLE televisoes ADD CONSTRAINT televisoes_fk1
+FOREIGN KEY (products_id) REFERENCES products(id);
+
+
+ALTER TABLE old_product_versions ADD CONSTRAINT old_product_versions_fk1
+FOREIGN KEY (old_products_id) REFERENCES old_products(id);
+
+
+ALTER TABLE old_product_versions ADD CONSTRAINT old_product_versions_fk2
 FOREIGN KEY (products_id) REFERENCES products(id);
 
 
