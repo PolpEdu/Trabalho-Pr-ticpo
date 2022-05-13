@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const ordersControllers = require('../controllers/orders');
+const ratingsControllers = require('../controllers/ratings');
 const checkLogin = require('../middleware/check-user')
 
-router.post("/", checkLogin, ordersControllers.buyproduct);
+router.post("/:id", checkLogin, ratingsControllers.leaveRating);
 
 module.exports = router;

@@ -128,10 +128,6 @@ exports.registerproduct = async (req, res) => {
                         empresa_nif: parseInt(result_stocks.rows[0].empresas_nif),
                     }
 
-                    console.log("Product registered successfully: ")
-                    console.log(result_product)
-
-
                     return res.status(201).json({
                         status_code: 201,
                         message: "User registered Product successfully!",
@@ -227,7 +223,6 @@ exports.updateproduct = async (req, res) => {
         product_to_change.price,
         new Date(),
     ]
-    console.log(old_product_object)
     const update_empresa = [
         empresa_produtora,
         id
@@ -245,8 +240,8 @@ exports.updateproduct = async (req, res) => {
     const query_old_product_versions = 'INSERT INTO old_product_versions (version, old_products_id, products_id) VALUES ($1, $2, $3) RETURNING version, old_products_id,products_id'
     const query_exists_empresa = 'SELECT * FROM empresas WHERE nif = $1'
     //update the empresa and set the stock to 0
-    const query_update_empresa = 'UPDATE stock_product SET empresas_nif = $1, stock = 0 WHERE id = $2'
-    const query_update_stock = 'UPDATE stock_product SET stock = $1 WHERE products_id = $2'
+    const query_update_empresa = 'UPDATE stock_product SET empresas_nif = $1, stock = 0 WHERE products_id = $2 RETURNING empresas_nif, stock'
+    const query_update_stock = 'UPDATE stock_product SET stock = $1 WHERE products_id = $2 RETURNING stock, empresas_nif'
 
 
     try {
@@ -262,6 +257,8 @@ exports.updateproduct = async (req, res) => {
         console.log(new_product_updated.rows[0])*/
 
         //check if empresa exists to throw an error if it doesn't
+        let stockres;
+        let empresares;
         if (empresa_produtora) {
             let result_empresa = await client.query(query_exists_empresa, [empresa_produtora])
             if (result_empresa.rows.length === 0) {
@@ -271,11 +268,11 @@ exports.updateproduct = async (req, res) => {
                 })
             }
             console.log("updating Empresa")
-            await client.query(query_update_empresa, update_empresa)
+            empresares = await client.query(query_update_empresa, update_empresa)
         }
         if (stock) {
             console.log("updating stock")
-            await client.query(query_update_stock, update_stock)
+            stockres = await client.query(query_update_stock, update_stock)
         }
 
         if (type) {
@@ -285,17 +282,17 @@ exports.updateproduct = async (req, res) => {
 
         const old_product = old_product_updated.rows[0]
         const new_product = new_product_updated.rows[0]
-        console.log("old product: ")
-        console.log(old_product)
-        console.log("new product: ")
-        console.log(new_product)
 
         await client.query('COMMIT')
 
         return res.status(200).json({
             status_code: 200,
             message: "Product updated successfully!",
-            new_product: new_product,
+            new_product: {
+                product_new: new_product,
+                stock: stock ? stockres.rows[0].stock : "Unchanged",
+                empresa: empresa_produtora ? empresares.rows[0].empresas_nif : "Unchanged",
+            },
             old_product: old_product
         });
 
@@ -336,12 +333,10 @@ exports.getproduct = (req, res) => {
             //all previous versions numbers
             const old_prod_res = await client.query(query_get_old_products, values);
             const all_versions = old_prod_res.rows.map(row => parseInt(row.old_products_id))
-            console.log(all_versions)
 
             // query all the old_products with the previous versions
             const query_get_old_products_with_versions = 'SELECT * FROM old_products WHERE id = ANY($1) ORDER BY id DESC'
             const old_products = await client.query(query_get_old_products_with_versions, [all_versions])
-            console.log(old_products.rows)
             latest_versions = old_products.rows
 
 

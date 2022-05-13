@@ -12,38 +12,45 @@ I usually end my procedures with COMMIT and when an error occurs I use ROLLBACK!
 and leave it to the topmost caller.
 */ --TODO: needs testing this procedure
  
-CREATE or replace procedure orderEXEC(nif orders.users_nif%type, idprod products.id%type,qnt stock_product.stock%type, statusOrder orders.status%type) LANGUAGE plpgsql AS $$
+CREATE or replace procedure orderEXEC(nif orders.users_nif%type, idprod products.id%type,qnt stock_product.stock%type, statusOrder orders.status%type) --return an object from the table orders
+as $$
 DECLARE
       new_order_id orders.order_id%type;
 BEGIN
+      -- check if asked quanity is 0
+      IF qnt = 0 THEN
+            RAISE EXCEPTION 'Quantity must be greater than 0';
+      END IF;
+
       -- check if the product exists
       IF NOT EXISTS (SELECT * FROM products WHERE id = idprod) THEN
-            RAISE EXCEPTION 'Product does not exist';
+            --raise exepction with the message of the product id
+            RAISE EXCEPTION 'Product with id % does not exist', idprod;
       END IF;
+
       -- check if the user exists
-      IF NOT EXISTS (SELECT * FROM users WHERE nif = nif) THEN
+      IF NOT EXISTS (SELECT * FROM users WHERE users.nif = users.nif) THEN
             RAISE EXCEPTION 'User does not exist';
       END IF;
 
       -- check if the stock in stock_product table is greater than the quantity ordered
       IF NOT EXISTS (SELECT * FROM stock_product WHERE products_id = idprod AND stock >= qnt) THEN
-            RAISE EXCEPTION 'Not enough stock';
+            RAISE EXCEPTION 'Not enough stock for product with id %, current stock: %, asked stock: %', idprod, (SELECT stock FROM stock_product WHERE products_id = idprod), qnt;
       END IF;
 
       -- update the stock in stock_product table
       UPDATE stock_product SET stock = stock - qnt WHERE products_id = idprod;
 
       --create a new order and return his id
-      INSERT INTO orders (users_nif, status, order_date)VALUES (nif, statusOrder, now()) RETURNING id INTO new_order_id;
+      INSERT INTO orders (users_nif, status, order_date) VALUES (nif, statusOrder, now()) RETURNING order_id INTO new_order_id;
 
       -- create a new compra_product
-      INSERT INTO compra_product (quantidade, preco, orders_order_id, products_id) VALUES (qnt,
-      (SELECT preco FROM products WHERE id = idprod),
-      new_order_id,
-      idprod);
+      INSERT INTO compra_product (quantidade, orders_order_id, products_id) VALUES (qnt, new_order_id, idprod);
 
+      -- return the new order id
+      RETURN new_order_id;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
 -- call it like: CALL orderEXEC(nif, idprod, qnt, statusOrder);
  --delete all tables

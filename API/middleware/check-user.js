@@ -20,8 +20,7 @@ module.exports = (req, res, next) => {
 
         const tokenheader = req.headers.authorization;
         const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
-        req.userData = decoded;
-
+        req.userData = decoded; //append to request object
         if (decoded) {
             client.query('SELECT CASE WHEN EXISTS(SELECT 1 FROM users WHERE nif = $1) THEN true ELSE false END AS exists', [decoded.nif], (err, result) => {
                 if (err) {
