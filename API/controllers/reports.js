@@ -11,15 +11,14 @@ exports.checkyear = (req, res, next) => {
     (…) ]
     }
 */
-    // check order details in the last 12 months from now in one query
-    
+    // check get the orders of the year, divided by months and the total value of the orders
     const query = `
-    SELECT extract(month from time_created) as month, extract(year from time_created) as year, count(*) as orders, sum(total_value) as total_value
-    FROM orders
-    WHERE extract(year from time_created) = extract(year from now())
-    GROUP BY extract(month from time_created), extract(year from time_created)
-    ORDER BY extract(month from time_created) ASC
-    `;
+    SELECT
+        EXTRACT(MONTH FROM order_date) AS month,
+        SUM(preco_total) AS total,
+        COUNT(*) AS orders
+        FROM orders WHERE order_date > (NOW() - INTERVAL '12 months')
+        GROUP BY EXTRACT(MONTH FROM order_date) ORDER BY EXTRACT(MONTH FROM order_date) ASC`
 
     
     client.query(query).then(response => {
