@@ -26,17 +26,17 @@ exports.registerproduct = async (req, res) => {
         "name": "Product 1", //obrigatório
         "price": 100, // obrigatório
         "type": "computadores", // obrigatório -> computadores, smartphones, tablets, televisoes
-        "nif_empresa_produtora": 123456789, // obrigatório
+        "nif_empresa_produtora": 111111111, // obrigatório
         "stock": 10, // obrigatório
 
-        "description": "This is a product", // não obrigatório
+        "description": "This is a product" // não obrigatório
     }
     */
     const { type, specs_id, nif_empresa_produtora, name, price, stock, description } = req.body
 
     //version defaults to 1
     if (!type || !name || !price || !stock || !nif_empresa_produtora) {
-        res.status(400).json({
+        return res.status(400).json({
             status_code: 400,
             errors: 'Missing required fields: name, price, type, empresa_produtora, stock',
         })

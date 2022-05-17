@@ -18,9 +18,11 @@ const userRoutes = require("./API/routes/users");
 const productRoutes = require("./API/routes/products");
 const orderRoutes = require("./API/routes/orders");
 const ratingRoutes = require("./API/routes/ratings");
+const questionsRoutes = require("./API/routes/questions");
 
 const cors = require("cors");
 const insertfakeEmpresas = require("./API/utils/fakeempresas");
+const insertFakeProducts = require("./API/utils/fakeproducts");
 const corsOptions = {
   origin: '*',
   credentials: true,            //access-control-allow-credentials:true
@@ -36,6 +38,7 @@ app.use("/dbproj/product", productRoutes);
 app.use("/dbproj/user", userRoutes);
 app.use("/dbproj/order", orderRoutes);
 app.use("/dbproj/rating", ratingRoutes);
+app.use("/dbproj/questions", questionsRoutes);
 
 app.use(
   session({
@@ -62,7 +65,7 @@ app.listen(app.get('port'), function () {
 
   insertfakeEmpresas();
 
-
+  insertFakeProducts();
 
 });
 

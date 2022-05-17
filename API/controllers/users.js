@@ -21,11 +21,11 @@ const jwt = require("jsonwebtoken");
 exports.signup = async (req, res) => {
     /*
     {
-    "nif": 123456789, //9 digitos
-    "username": "dsada", // 50 chars
-    "email": "edujgnunes@gmail.com", // email valido
-    "password": "sad", // >= 3 chars
-    "type": "comprador" // comprador ou vendedor ou administrador
+        "nif": 123456789, //9 digitos
+        "username": "dsada", // 50 chars
+        "email": "edujgnunes@gmail.com", // email valido
+        "password": "sad", // >= 3 chars
+        "type": "comprador" // comprador ou vendedor ou administrador
     }
     */
 

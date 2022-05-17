@@ -6,7 +6,7 @@ async function insertfakeEmpresas() {
     const query_check_empresas = 'SELECT CASE WHEN EXISTS(SELECT 1 FROM empresas WHERE nif = $1) THEN true ELSE false END AS exists';
     let res = await client.query(query_check_empresas, [111111111]);
     if (res.rows[0].exists) {
-        console.log("Table empresas already contains the fake data.\n\n\n");
+        console.log("Table empresas already contains the fake data.");
         return;
     }
 

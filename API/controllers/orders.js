@@ -6,9 +6,9 @@ exports.buyproduct = async (req, res, next) => {
     * Request has this type: (product_id, quantity)
     * {
     *  "cart": [
-    *    [1, 10],
-    *    [2, 20],
-    *    [3, 30]
+    *    [1, 10], // onde 1 é o id do produto e 10 é a quantidade
+    *    [2, 20], // onde 2 é o id do produto e 20 é a quantidade
+    *    [3, 30]  // onde 3 é o id do produto e 30 é a quantidade
     *  ]
     * }
     */
