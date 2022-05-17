@@ -75,7 +75,7 @@ exports.signup = async (req, res) => {
                 }
             } catch (err) {
                 console.log(err)
-                res.status(500).json({
+                return res.status(500).json({
                     status_code: 500,
                     errors: "Couldn't fetch admins: " + err,
                 });

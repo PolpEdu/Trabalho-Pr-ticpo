@@ -11,20 +11,21 @@ exports.checkyear = (req, res, next) => {
     (…) ]
     }
 */
+    // get the total cost of an order of orders last year by calling a procedure
     // check get the orders of the year, divided by months and the total value of the orders
     const query = `
     SELECT
         EXTRACT(MONTH FROM order_date) AS month,
-        SUM(preco_total) AS total,
+        get_total_price(order_id) AS total_value,
         COUNT(*) AS orders
         FROM orders WHERE order_date > (NOW() - INTERVAL '12 months')
         GROUP BY EXTRACT(MONTH FROM order_date) ORDER BY EXTRACT(MONTH FROM order_date) ASC`
-
+    //todo: error here, falta mais o historio de produtos num query e o relatório.
     
     client.query(query).then(response => {
         return res.status(200).json({
             status_code: 200,
-            message: "Success",
+            message: "Fetched last 12 months of orders!",
             results: response.rows
         });
     }

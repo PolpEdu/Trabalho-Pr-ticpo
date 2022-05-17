@@ -318,3 +318,19 @@ CREATE or replace TRIGGER trigger_notification_thread
      AFTER INSERT ON thread
      FOR EACH ROW
      EXECUTE PROCEDURE insert_notifications_thread();
+
+
+
+-- get the total price of an order
+CREATE or replace FUNCTION get_total_price(order_id orders.order_id%type) RETURNS numeric
+AS $$
+DECLARE
+      total numeric;
+BEGIN
+      -- get the total price of the order
+      SELECT SUM(quantidade * products.price) INTO total FROM compra_product, products WHERE compra_product.orders_order_id = order_id AND compra_product.products_id = products.id;
+      -- return the total price
+      RETURN total;
+END;
+$$
+language plpgsql;
