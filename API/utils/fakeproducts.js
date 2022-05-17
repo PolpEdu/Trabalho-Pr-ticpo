@@ -11,17 +11,13 @@ async function insertFakeProducts() {
     }
 
 
-    const query_insert_product = 'INSERT INTO products (id, name, description, price) VALUES ($1, $2, $3, $4)';
+    const query_insert_product = 'INSERT INTO products (name, description, price) VALUES ($1, $2, $3)';
     for (let i = 1; i < 6; i++) {
-        let id = i;
         const nome = "Product" + i;
         const descricao = "Descricao" + i;
         const preco = i * i;
-        const stock = i * i;
-        const imagem = "imagem" + i + ".jpg";
 
         const values = [
-            parseInt(id),
             nome,
             descricao,
             preco,
@@ -35,7 +31,30 @@ async function insertFakeProducts() {
             //console.log(result.rows[0]);
         });
     }
-    console.log("Fake products inserted.\n\n\n");
+    console.log("Fake products inserted.");
+
+    // insert also fake specifications 
+    const query_insert_specification = 'INSERT INTO specifications (name, description, products_id) VALUES ($1, $2, $3)';
+    for (let i = 1; i < 6; i++) {
+        const nome = "Specification" + i;
+        const descricao = "Descricao" + i;
+        const id = i;
+
+        const values = [
+            nome,
+            descricao,
+            id,
+        ];
+        client.query(query_insert_specification, values, (err, result) => {
+            if (err) {
+                console.log("erro");
+                console.log(err);
+                return;
+            }
+            //console.log(result.rows[0]);
+        });
+    }
+    console.log("Fake specifications inserted.");
 
 }
 

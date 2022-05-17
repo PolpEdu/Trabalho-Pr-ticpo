@@ -85,7 +85,7 @@ CREATE TABLE thread (
 
 CREATE TABLE reply (
 	resposta_id SERIAL,
-	varchar	 VARCHAR(1024) NOT NULL,
+	reply_txt	 VARCHAR(1024) NOT NULL,
 	description VARCHAR(512),
 	thread_id	 BIGINT NOT NULL,
 	users_nif	 BIGINT NOT NULL,

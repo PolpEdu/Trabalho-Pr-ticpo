@@ -74,7 +74,7 @@ exports.subquestion = async (req, res, next) => {
         
         //insert on main thread the main question of the product
         client.query(
-            `INSERT INTO reply (text, description, thread_id, users_nif) VALUES ($1, $2, $3, $4) RETURNING *`
+            `INSERT INTO reply (reply_txt, description, thread_id, users_nif) VALUES ($1, $2, $3, $4) RETURNING *`
             , [question, description, parentid, nif]).then(response => {
                 return res.status(201).json({
                     status_code: 201,
@@ -110,21 +110,30 @@ exports.getQuestions = async (req, res, next) => {
 
     try {
         const response = await client.query(`SELECT * FROM thread WHERE products_id = $1`, [id]);
+        if(response.rows.length === 0){
+            return res.status(200).json({
+                status_code: 200,
+                message: "No questions found for this product",
+            });
+        }
+        // console.log(response.rows);
 
         // get all replies for each question
-        const questions = response.rows.map(async (question) => {
-            const response = await client.query(`SELECT * FROM reply WHERE thread_id = $1`, [question.thread_id]);
+        const questions = await response.rows.map(async (question) => {
+            const response = await client.query(`SELECT * FROM reply WHERE thread_id = $1`, [question.id]);
             return {
                 ...question,
                 replies: response.rows
             }
         });
+        const questionsWithReplies = await Promise.all(questions);
 
         return res.status(200).json({
             status_code: 200,
             message: "Questions retrieved!",
-            data:questions,
+            data:questionsWithReplies,
         });
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({

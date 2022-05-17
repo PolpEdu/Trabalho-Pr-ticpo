@@ -111,6 +111,7 @@ exports.registerproduct = async (req, res) => {
             console.log("error. Rollbacking..." + err.message)
             await client.query('ROLLBACK')
             result2 = null
+            console.log(err)
             return res.status(500).json({
                 status_code: 500,
                 errors: err.message,
@@ -308,8 +309,76 @@ exports.updateproduct = async (req, res) => {
 
 }
 
+exports.getproduct = (req, res, next) => {
+     /*
+    Get this product information with ONLY ONE QUERY
+    should return:
+        {
+            “status”: status_code, “errors”: errors (if any occurs)},
+            “results”:
+            {
+                “description”:  “product_description”,
+                “prices”: [“current_price_date - current_price”, “prev_price_date  - prev_price”, (…)],
+                “rating”: average rating,
+                “comments”: [“comment 1”, “comment 2”,  (…)]
+            }
+        }
+    */
+    const { id } = req.params
+    // in one query inner join, product:  id, name, price, description, stock,
+    // specifications (from specification table), all old product versions, average rating,
+    const query = `
+    SELECT p.id, p.name, p.price, p.description,
+     q.stock,
+      s.name, s.valor_da_spec,
+       o.version, 
+       v.id, v.name, v.description, v.price, v.date_added,
+        AVG(r.quantity) as average_rating,
+         c.main_pergunta, c.time_created, c.description
+      FROM products p
+      INNER JOIN old_product_versions o ON p.id = o.products_id 
+      INNER JOIN old_products v ON o.old_products_id = v.id
+      INNER JOIN stock_product q ON p.id = q.products_id
+      INNER JOIN specification s ON p.id = s.products_id 
+      INNER JOIN rating r ON p.id = r.products_id
+       INNER JOIN thread c ON p.id = c.products_id WHERE p.id = $1
+        GROUP BY p.id, p.name, p.price, p.description,
+        q.stock,
+         s.name, s.valor_da_spec,
+          o.version, 
+          v.id, v.name, v.description, v.price, v.date_added,
+            c.main_pergunta, c.time_created, c.description ORDER BY v.date_added DESC`
 
+    const values = [id]
+    
+    client.query(query, values).then(result => {
+        console.log(result.rows)
+        if (result.rows.length === 0) {
+            return res.status(400).json({
+                status_code: 400,
+                errors: "Product with id " + id + " does not exist",
+            })
+        }
+        return res.status(200).json({
+            status_code: 200,
+            results: result.rows
+        })
+    }).catch(error => {
+        console.log(error)
+        return res.status(500).json({
+            status_code: 500,
+            errors: "Couldn't fetch product: " + error.message,
+        })
+    });
+
+    
+}
+
+/* 
+    DEPRECIATED:
 exports.getproduct = (req, res) => {
+
+   
     const { id } = req.params
     const query_get_product = 'SELECT * FROM products WHERE id = $1'
     const values = [id]
@@ -361,4 +430,4 @@ exports.getproduct = (req, res) => {
             latest_versions: latest_versions
         })
     })
-}
+}*/

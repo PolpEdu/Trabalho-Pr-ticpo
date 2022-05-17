@@ -9,7 +9,7 @@ const checkVendedorouAdmin = require('../middleware/check-comprador'); //check w
 router.get('/', checkLogin, productsControllers.getproducts)
 router.post('/', checkVendedorouAdmin, productsControllers.registerproduct)
 router.put('/:id', checkVendedorouAdmin, productsControllers.updateproduct)
-router.get('/:id', checkLogin, productsControllers.getproduct)
+router.get('/:id', productsControllers.getproduct)
 
 
 module.exports = router;
