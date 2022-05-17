@@ -11,7 +11,7 @@ async function insertFakeProducts() {
     }
 
 
-    const query_insert_product = 'INSERT INTO products (id, nome, descricao, preco, stock, imagem) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, nome, descricao, preco, stock, imagem';
+    const query_insert_product = 'INSERT INTO products (id, name, description, price) VALUES ($1, $2, $3, $4)';
     for (let i = 1; i < 6; i++) {
         let id = i;
         const nome = "Product" + i;
@@ -25,21 +25,17 @@ async function insertFakeProducts() {
             nome,
             descricao,
             preco,
-            stock,
-            imagem,
         ];
         client.query(query_insert_product, values, (err, result) => {
             if (err) {
                 console.log("erro");
+                console.log(err);
                 return;
             }
             //console.log(result.rows[0]);
         });
     }
-
-
-
-
+    console.log("Fake products inserted.\n\n\n");
 
 }
 

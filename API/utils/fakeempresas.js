@@ -43,6 +43,7 @@ async function insertfakeEmpresas() {
         client.query(query_insert_empresa, values, (err, result) => {
             if (err) {
                 console.log("erro");
+                console.log(err);
                 return;
             }
             //console.log(result.rows[0]);
