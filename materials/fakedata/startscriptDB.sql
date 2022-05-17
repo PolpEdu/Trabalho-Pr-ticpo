@@ -265,3 +265,56 @@ BEGIN
       --RETURN new_order_id;
 END;
 $$ LANGUAGE plpgsql;
+
+
+-- create a trigger that when a order is inserted create an
+-- order notification in notification table for the user
+-- who created the order
+CREATE OR REPLACE FUNCTION insert_notification_order() RETURNS TRIGGER AS
+$BODY$
+BEGIN
+    INSERT INTO notificacoes(mensagem,aberta, title, users_nif) VALUES ('New Order Created!',false, 'New Order!', NEW.users_nif);
+      INSERT INTO orders_notificacoes(notificacoes_id, orders_order_id) VALUES (currval('notificacoes_id_seq'), NEW.order_id);
+      RETURN NEW;
+END;
+$BODY$
+language plpgsql;
+
+CREATE or replace TRIGGER trigger_notification_order
+     AFTER INSERT ON orders
+     FOR EACH ROW
+     EXECUTE PROCEDURE insert_notification_order();
+
+-- trigger notification replies
+cREATE OR REPLACE FUNCTION insert_notifications_reply() RETURNS TRIGGER AS
+$BODY$
+BEGIN
+      INSERT INTO notificacoes(mensagem,aberta, title, users_nif) VALUES ('You just recieved a new reply',false, 'New Reply!', NEW.users_nif);
+      INSERT INTO notificacoes_reply(notificacoes_id, reply_resposta_id) VALUES (currval('notificacoes_id_seq'), NEW.resposta_id);
+      
+      RETURN NEW;
+END;
+$BODY$
+language plpgsql;
+
+CREATE or replace TRIGGER trigger_notification_reply
+     AFTER INSERT ON reply
+     FOR EACH ROW
+     EXECUTE PROCEDURE insert_notifications_reply();
+
+-- trigger notification threads
+cREATE OR REPLACE FUNCTION insert_notifications_thread() RETURNS TRIGGER AS
+$BODY$
+BEGIN
+      INSERT INTO notificacoes(mensagem,aberta, title, users_nif) VALUES ('Someone commented your product',false, 'New Comment!', NEW.users_nif);
+      INSERT INTO notificacoes_thread(notificacoes_id, thread_id) VALUES (currval('notificacoes_id_seq'), NEW.id);
+      
+      RETURN NEW;
+END;
+$BODY$
+language plpgsql;
+
+CREATE or replace TRIGGER trigger_notification_thread
+     AFTER INSERT ON thread
+     FOR EACH ROW
+     EXECUTE PROCEDURE insert_notifications_thread();

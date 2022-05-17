@@ -325,30 +325,21 @@ exports.getproduct = (req, res, next) => {
         }
     */
     const { id } = req.params
-    // in one query inner join, product:  id, name, price, description, stock,
-    // specifications (from specification table), all old product versions, average rating,
-    const query = `
-    SELECT p.id, p.name, p.price, p.description,
-     q.stock,
-      s.name, s.valor_da_spec,
-       o.version, 
-       v.id, v.name, v.description, v.price, v.date_added,
-        AVG(r.quantity) as average_rating,
-         c.main_pergunta, c.time_created, c.description
-      FROM products p
-      INNER JOIN old_product_versions o ON p.id = o.products_id 
-      INNER JOIN old_products v ON o.old_products_id = v.id
-      INNER JOIN stock_product q ON p.id = q.products_id
-      INNER JOIN specification s ON p.id = s.products_id 
-      INNER JOIN rating r ON p.id = r.products_id
-       INNER JOIN thread c ON p.id = c.products_id WHERE p.id = $1
-        GROUP BY p.id, p.name, p.price, p.description,
-        q.stock,
-         s.name, s.valor_da_spec,
-          o.version, 
-          v.id, v.name, v.description, v.price, v.date_added,
-            c.main_pergunta, c.time_created, c.description ORDER BY v.date_added DESC`
-
+    // in one query get the product product:  id, name, price, description, stock from stock_products table,
+    // specifications (from specification table), all old product versions from old_versions and old_products table,
+    // average rating,
+    /*{
+        “status”: status_code, “errors”: errors (if any occurs)},
+        “results”:
+        {
+            “description”:  “product_description”,
+            “prices”: [“current_price_date - current_price”, “prev_price_date  - prev_price”, (…)],
+            “rating”: average rating,
+            “comments”: [“comment 1”, “comment 2”,  (…)]
+        }
+    }*/
+    const query = 'SELECT * FROM products WHERE id = $1'
+    
     const values = [id]
     
     client.query(query, values).then(result => {
@@ -376,6 +367,31 @@ exports.getproduct = (req, res, next) => {
 
 /* 
     DEPRECIATED:
+     SELECT
+        products.id,
+        products.name,
+        products.description,
+        products.price,
+        specification.name,
+        old_product_versions.version,
+        old_products.name,
+        old_products.description,
+        old_products.price,
+        old_products.date_added,
+        AVG(rating.quantity),
+        thread.main_pergunta
+        FROM products
+        LEFT JOIN rating ON products.id = rating.products_id
+        LEFT JOIN specification ON specification.products_id = products.id
+        LEFT JOIN old_product_versions ON old_product_versions.products_id = products.id AND old_product_versions.old_products_id = $1
+        LEFT JOIN old_products ON old_products.id = old_product_versions.old_products_id
+        LEFT JOIN thread ON thread.products_id = products.id
+        WHERE products.id = $2
+        GROUP BY products.id, specification.name, old_product_versions.version,
+         old_products.name, old_products.description, old_products.price, old_products.date_added,
+        thread.main_pergunta
+        ORDER BY old_product_versions.version DESC
+        `
 exports.getproduct = (req, res) => {
 
    
