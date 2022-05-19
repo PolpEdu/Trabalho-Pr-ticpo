@@ -54,7 +54,6 @@ exports.subquestion = async (req, res, next) => {
 
     const { question, description } = req.body;
 
-    console.log(idproduct, parentid)
 
     if (!question) {
         return res.status(400).json({

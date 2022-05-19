@@ -284,11 +284,6 @@ exports.updateproduct = async (req, res) => {
         const old_product = old_product_updated.rows[0]
         const new_product = new_product_updated.rows[0]
 
-        // update all order_product containing the old product id to the new product
-        const query_update_order_products = 'UPDATE order_product SET products_id = $1 WHERE products_id = $2'
-        const values_update_order_products = [new_product.id, old_product.id]
-        await client.query(query_update_order_products, values_update_order_products)
-        
 
         await client.query('COMMIT')
 
@@ -315,93 +310,23 @@ exports.updateproduct = async (req, res) => {
 
 }
 
-exports.getproduct = (req, res, next) => {
-     /*
-    Get this product information with ONLY ONE QUERY
-    */
-    const { id } = req.params
-    // in one query get the product product:  id, name, price, description, stock from stock_products table,
-    // specification (from specification table), all old product versions from old_versions and old_products table,
-    // average rating,
-    /*{
-        “status”: status_code, “errors”: errors (if any occurs)},
-        “results”:
-        {
-            “description”:  “product_description”,
-            “prices”: [“current_price_date - current_price”, “prev_price_date  - prev_price”, (…)],
-            “rating”: average rating,
-            “comments”: [“comment 1”, “comment 2”,  (…)]
-        }
-    }*/
 
-    const query = `
-    SELECT 
-        products.id,
-        products.name,
-        products.price,
-        products.description
-        FROM products
-        INNER JOIN stock_product ON products.id = stock_product.products_id
-        
-        
-    `
-    
-
-    client.query(query, [id]).then(result => {
-        if (result.rows.length === 0) {
-            return res.status(404).json({
-                status_code: 404,
-                errors: "Product with id " + id + " does not exist",
-            })
-        }
-        return res.status(200).json({
-            status_code: 200,
-            message: "Product found!",
-            results: result.rows
-        })
-    }).catch(error => {
-        return res.status(500).json({
-            status_code: 500,
-            errors: "Couldn't get product: " + error.message,
-        })
-    })
-    
-}
-
-/* 
-    DEPRECIATED:
-      SELECT
-        products.id,
-        products.name,
-        products.description,
-        products.price,
-        specification.name,
-        old_product_versions.version,
-        old_products.name,
-        old_products.description,
-        old_products.price,
-        old_products.date_added,
-        AVG(rating.quantity),
-        thread.main_pergunta
-        FROM products
-        LEFT JOIN rating ON products.id = rating.products_id
-        LEFT JOIN specification ON specification.products_id = products.id
-        LEFT JOIN old_product_versions ON old_product_versions.products_id = products.id AND old_product_versions.old_products_id = $1
-        LEFT JOIN old_products ON old_products.id = old_product_versions.old_products_id
-        LEFT JOIN thread ON thread.products_id = products.id
-        WHERE products.id = $1
-        GROUP BY products.id, specification.name, old_product_versions.version,
-         old_products.name, old_products.description, old_products.price, old_products.date_added,
-        thread.main_pergunta
-        ORDER BY old_product_versions.version DESC`
-
+// todo: redo this in one query
 exports.getproduct = (req, res) => {
 
    
     const { id } = req.params
-    const query_get_product = 'SELECT * FROM products WHERE id = $1'
+    //get the product along along with the average ratings in
+    const query_get_product = 'SELECT name, description, id,  price FROM products WHERE id = $1'
+
+    // query in rating the average quantity of ratings and the comments for each product id 
+    const query_get_ratings = 'SELECT AVG(quantity) as average_rating FROM rating WHERE products_id = $1'
+
+    // query the comments for each product id from the rating table
+    const query_get_comments = 'SELECT comment FROM rating WHERE products_id = $1'
+
     const values = [id]
-    let latest_versions;
+    let latest_versions, avrg_rating, comments_array;
     client.query(query_get_product, values).then(async (result, error) => {
         if (error) {
             return res.status(500).json({
@@ -418,6 +343,19 @@ exports.getproduct = (req, res) => {
         //query the old products and add to the result all previous versions
         const query_get_old_products = 'SELECT old_products_id FROM old_product_versions WHERE products_id = $1 ORDER BY old_product_versions ASC'
         try {
+            /*
+            {
+                “status”: status_code, “errors”: errors (if any occurs)},
+                “results”: {
+                    “description”: “product_description”,
+                    “prices”: [
+                        “current_price_date - current_price”, “prev_price_date  - prev_price”, (…)
+                    ],
+                    “rating”: average rating,
+                    “comments”: [“comment 1”, “comment 2”, (…)]
+                }
+            }
+            */
             //all previous versions numbers
             const old_prod_res = await client.query(query_get_old_products, values);
             const all_versions = old_prod_res.rows.map(row => parseInt(row.old_products_id))
@@ -427,6 +365,30 @@ exports.getproduct = (req, res) => {
             const old_products = await client.query(query_get_old_products_with_versions, [all_versions])
             latest_versions = old_products.rows
 
+            //query all the ratings for the product
+            const ratings_res = await client.query(query_get_ratings, values)
+            console.log(ratings_res.rows)
+            avrg_rating = ratings_res.rows[0].average_rating
+
+            console.log( ratings_res.rows[0].comment)
+            if(avrg_rating === null){
+                avrg_rating = "No ratings for this product"
+            } else{
+                avrg_rating = parseFloat(avrg_rating).toFixed(2)
+            }
+
+            const comments_res = await client.query(query_get_comments, values)
+            console.log(comments_res.rows)
+            comments_array = comments_res.rows.map(row => row.comment)
+
+
+            let price_differences = []
+            for (let i = 0; i < latest_versions.length; i++) {
+                const price_difference = latest_versions[i].price - result.rows[0].price
+                price_differences.push(price_difference)
+            }
+
+
 
         } catch (error) {
             console.log(error)
@@ -435,8 +397,8 @@ exports.getproduct = (req, res) => {
                 errors: "Couldn't fetch products: " + error.message,
             })
         }
-
-        const { name, price, description, id } = result.rows[0]
+        console.log(result.rows[0])
+        const { name, price, description, id} = result.rows[0]
         return res.status(200).json({
             status_code: 200,
             message: "Product fetched successfully!",
@@ -444,9 +406,11 @@ exports.getproduct = (req, res) => {
                 name: name,
                 price: price,
                 description: description,
+                rating: avrg_rating,
+                comments: comments_array,
                 main_product_id: id,
             },
-            latest_versions: latest_versions
+            latest_versions: latest_versions,
         })
     })
-}*/
+}

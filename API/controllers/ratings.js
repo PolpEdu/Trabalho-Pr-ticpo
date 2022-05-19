@@ -4,7 +4,7 @@ exports.leaveRating = async (req, res, next) => {
     /*
     * Request has this type: (product_id, quantity)	
     * {
-    *   "quantity": 5 //from 0 to 5
+    *   "quantity": 5 //from 1 to 5, if the quantity is 0 it means that the user didn't rate the product.
     *   "comment": "This is a comment for the product"
     * }
     */
