@@ -17,7 +17,8 @@ module.exports = (req, res, next) => {
             });
         }
 
-        const tokenheader = req.headers.authorization;
+        try {
+            const tokenheader = req.headers.authorization;
         const decoded = jwt.verify(tokenheader, process.env.JWT_SECRET);
         console.log("Admin connected: ");
         console.log(decoded);
@@ -49,6 +50,20 @@ module.exports = (req, res, next) => {
                 error: "Something went wrong, token is invalid!",
             });
         }
+        } catch (error) {
+            if (error.name === "TokenExpiredError") {
+                return res.status(401).json({
+                    status_code: 401,
+                    error: "Something went wrong, token has expired!",
+                });
+            }
+            console.log("error: ", error);
+            return res.status(401).json({
+                status_code: 401,
+                error: "Something went wrong, token is invalid!",
+            });
+        }
+        
     } catch (error) {
         console.log(error);
         return res.status(401).json({
