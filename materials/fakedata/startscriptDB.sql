@@ -230,6 +230,7 @@ CREATE or replace procedure orderEXEC(nif orders.users_nif%type, idprod products
 as $$
 DECLARE
       new_order_id orders.order_id%type;
+	  total_price orders.preco_total%type;
 BEGIN
       -- check if asked quanity is 0
       IF qnt = 0 THEN
@@ -255,8 +256,11 @@ BEGIN
       -- update the stock in stock_product table
       UPDATE stock_product SET stock = stock - qnt WHERE products_id = idprod;
 
+	  -- get the total order price
+	  total_price := (SELECT price FROM products WHERE id = idprod) * qnt;
+
       --create a new order and return his id
-      INSERT INTO orders (users_nif, status, order_date) VALUES (nif, statusOrder, now()) RETURNING order_id INTO new_order_id;
+      INSERT INTO orders (users_nif, status, order_date, preco_total) VALUES (nif, statusOrder, now(),total_price) RETURNING order_id INTO new_order_id;
 
       -- create a new compra_product
       INSERT INTO compra_product (quantidade, orders_order_id, products_id) VALUES (qnt, new_order_id, idprod);

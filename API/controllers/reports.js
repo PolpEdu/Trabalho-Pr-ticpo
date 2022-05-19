@@ -20,7 +20,7 @@ exports.checkyear = (req, res, next) => {
         COUNT(*) AS orders
         FROM orders WHERE order_date > (NOW() - INTERVAL '12 months')
         GROUP BY EXTRACT(MONTH FROM order_date) ORDER BY EXTRACT(MONTH FROM order_date) ASC`
-    //todo: error here, falta mais o historio de produtos num query e o relatório.
+
     
     client.query(query).then(response => {
         return res.status(200).json({

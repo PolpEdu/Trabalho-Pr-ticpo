@@ -4,8 +4,8 @@ const client = new Client({
     host: "localhost",
     user: process.env.DBUSER,
     port: 5432,
-    password: process.env.DBUSER,
-    database: "trabalhoBD"
+    password: process.env.DBPASS,
+    database: process.env.NOMEBASEDADOS
 })
 
 module.exports = client

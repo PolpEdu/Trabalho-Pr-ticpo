@@ -326,7 +326,7 @@ exports.getproduct = (req, res, next) => {
     */
     const { id } = req.params
     // in one query get the product product:  id, name, price, description, stock from stock_products table,
-    // specifications (from specification table), all old product versions from old_versions and old_products table,
+    // specification (from specification table), all old product versions from old_versions and old_products table,
     // average rating,
     /*{
         “status”: status_code, “errors”: errors (if any occurs)},
@@ -342,25 +342,6 @@ exports.getproduct = (req, res, next) => {
     
     const values = [id]
     
-    client.query(query, values).then(result => {
-        console.log(result.rows)
-        if (result.rows.length === 0) {
-            return res.status(400).json({
-                status_code: 400,
-                errors: "Product with id " + id + " does not exist",
-            })
-        }
-        return res.status(200).json({
-            status_code: 200,
-            results: result.rows
-        })
-    }).catch(error => {
-        console.log(error)
-        return res.status(500).json({
-            status_code: 500,
-            errors: "Couldn't fetch product: " + error.message,
-        })
-    });
 
     
 }

@@ -33,8 +33,8 @@ async function insertFakeProducts() {
     }
     console.log("Fake products inserted.");
 
-    // insert also fake specifications 
-    const query_insert_specification = 'INSERT INTO specifications (name, description, products_id) VALUES ($1, $2, $3)';
+    // insert also fake specification 
+    const query_insert_specification = 'INSERT INTO specification (name, valor_da_spec, products_id) VALUES ($1, $2, $3)';
     for (let i = 1; i < 6; i++) {
         const nome = "Specification" + i;
         const descricao = "Descricao" + i;
@@ -54,7 +54,7 @@ async function insertFakeProducts() {
             //console.log(result.rows[0]);
         });
     }
-    console.log("Fake specifications inserted.");
+    console.log("Fake specification inserted.");
 
 }
 

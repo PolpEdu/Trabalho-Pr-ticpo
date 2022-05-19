@@ -118,6 +118,7 @@ exports.getQuestions = async (req, res, next) => {
         }
         // console.log(response.rows);
 
+        //todo: fazer isto numa só query, parece mais simples.
         // get all replies for each question
         const questions = await response.rows.map(async (question) => {
             const response = await client.query(`SELECT * FROM reply WHERE thread_id = $1`, [question.id]);
