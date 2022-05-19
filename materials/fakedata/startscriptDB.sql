@@ -16,8 +16,6 @@ and leave it to the topmost caller.
  --delete all tables
 
 DROP SCHEMA public CASCADE;
-
-
 CREATE SCHEMA public;
 
 

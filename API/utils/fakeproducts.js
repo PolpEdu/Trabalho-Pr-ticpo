@@ -33,6 +33,32 @@ async function insertFakeProducts() {
     }
     console.log("Fake products inserted.");
 
+    //insert fake stocks in the stock_products table
+    const query_insert_stock = 'INSERT INTO stock_product (stock, empresas_nif, products_id) VALUES ($1, $2, $3) RETURNING stock, empresas_nif, products_id';
+    for (let i = 1; i < 6; i++) {
+        const id_produto = i;
+        const stock =i*10;
+        let nif = "";
+        for (let j = 1; j < 9; j++) {
+            nif += i;
+        }
+        nif += i;
+        const values = [
+            stock,
+            nif,
+            id_produto,
+        ];
+        client.query(query_insert_stock, values, (err, result) => {
+            if (err) {
+                console.log("erro");
+                console.log(err);
+                return;
+            }
+            //console.log(result.rows[0]);
+        });
+    }
+    console.log("Fake stocks inserted.");
+
     // insert also fake specification 
     const query_insert_specification = 'INSERT INTO specification (name, valor_da_spec, products_id) VALUES ($1, $2, $3)';
     for (let i = 1; i < 6; i++) {
