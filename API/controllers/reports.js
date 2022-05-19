@@ -16,7 +16,7 @@ exports.checkyear = (req, res, next) => {
     const query = `
     SELECT
         EXTRACT(MONTH FROM order_date) AS month,
-        get_total_price(order_id) AS total_value,
+        SUM(preco_total) AS total_value,
         COUNT(*) AS orders
         FROM orders WHERE order_date > (NOW() - INTERVAL '12 months')
         GROUP BY EXTRACT(MONTH FROM order_date) ORDER BY EXTRACT(MONTH FROM order_date) ASC`
