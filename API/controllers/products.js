@@ -284,6 +284,12 @@ exports.updateproduct = async (req, res) => {
         const old_product = old_product_updated.rows[0]
         const new_product = new_product_updated.rows[0]
 
+        // update all order_product containing the old product id to the new product
+        const query_update_order_products = 'UPDATE order_product SET products_id = $1 WHERE products_id = $2'
+        const values_update_order_products = [new_product.id, old_product.id]
+        await client.query(query_update_order_products, values_update_order_products)
+        
+
         await client.query('COMMIT')
 
         return res.status(200).json({
@@ -327,6 +333,18 @@ exports.getproduct = (req, res, next) => {
             “comments”: [“comment 1”, “comment 2”,  (…)]
         }
     }*/
+
+    const query = `
+    SELECT 
+        products.id,
+        products.name,
+        products.price,
+        products.description
+        FROM products
+        INNER JOIN stock_product ON products.id = stock_product.products_id
+        
+        
+    `
     
 
     client.query(query, [id]).then(result => {
