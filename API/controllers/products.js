@@ -312,17 +312,6 @@ exports.updateproduct = async (req, res) => {
 exports.getproduct = (req, res, next) => {
      /*
     Get this product information with ONLY ONE QUERY
-    should return:
-        {
-            “status”: status_code, “errors”: errors (if any occurs)},
-            “results”:
-            {
-                “description”:  “product_description”,
-                “prices”: [“current_price_date - current_price”, “prev_price_date  - prev_price”, (…)],
-                “rating”: average rating,
-                “comments”: [“comment 1”, “comment 2”,  (…)]
-            }
-        }
     */
     const { id } = req.params
     // in one query get the product product:  id, name, price, description, stock from stock_products table,
@@ -338,17 +327,32 @@ exports.getproduct = (req, res, next) => {
             “comments”: [“comment 1”, “comment 2”,  (…)]
         }
     }*/
-    const query = 'SELECT * FROM products WHERE id = $1'
-    
-    const values = [id]
     
 
+    client.query(query, [id]).then(result => {
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                status_code: 404,
+                errors: "Product with id " + id + " does not exist",
+            })
+        }
+        return res.status(200).json({
+            status_code: 200,
+            message: "Product found!",
+            results: result.rows
+        })
+    }).catch(error => {
+        return res.status(500).json({
+            status_code: 500,
+            errors: "Couldn't get product: " + error.message,
+        })
+    })
     
 }
 
 /* 
     DEPRECIATED:
-     SELECT
+      SELECT
         products.id,
         products.name,
         products.description,
@@ -367,12 +371,12 @@ exports.getproduct = (req, res, next) => {
         LEFT JOIN old_product_versions ON old_product_versions.products_id = products.id AND old_product_versions.old_products_id = $1
         LEFT JOIN old_products ON old_products.id = old_product_versions.old_products_id
         LEFT JOIN thread ON thread.products_id = products.id
-        WHERE products.id = $2
+        WHERE products.id = $1
         GROUP BY products.id, specification.name, old_product_versions.version,
          old_products.name, old_products.description, old_products.price, old_products.date_added,
         thread.main_pergunta
-        ORDER BY old_product_versions.version DESC
-        `
+        ORDER BY old_product_versions.version DESC`
+
 exports.getproduct = (req, res) => {
 
    
