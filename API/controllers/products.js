@@ -365,12 +365,19 @@ exports.getproduct = (req, res) => {
             const old_products = await client.query(query_get_old_products_with_versions, [all_versions])
             latest_versions = old_products.rows
 
+            for(let i = 0; i < latest_versions.length; i++){
+                // get the price difference from each version to the next one
+                try {
+                    latest_versions[i].price_difference = latest_versions[i].price - latest_versions[i+1].price
+                } catch (error) {
+                    latest_versions[i].price_difference = latest_versions[i].price
+                }
+            }
+
             //query all the ratings for the product
             const ratings_res = await client.query(query_get_ratings, values)
-            console.log(ratings_res.rows)
             avrg_rating = ratings_res.rows[0].average_rating
 
-            console.log( ratings_res.rows[0].comment)
             if(avrg_rating === null){
                 avrg_rating = "No ratings for this product"
             } else{
@@ -378,15 +385,7 @@ exports.getproduct = (req, res) => {
             }
 
             const comments_res = await client.query(query_get_comments, values)
-            console.log(comments_res.rows)
             comments_array = comments_res.rows.map(row => row.comment)
-
-
-            let price_differences = []
-            for (let i = 0; i < latest_versions.length; i++) {
-                const price_difference = latest_versions[i].price - result.rows[0].price
-                price_differences.push(price_difference)
-            }
 
 
 
@@ -397,7 +396,6 @@ exports.getproduct = (req, res) => {
                 errors: "Couldn't fetch products: " + error.message,
             })
         }
-        console.log(result.rows[0])
         const { name, price, description, id} = result.rows[0]
         return res.status(200).json({
             status_code: 200,

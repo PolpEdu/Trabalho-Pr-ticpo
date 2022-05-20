@@ -44,12 +44,12 @@ module.exports = (req, res, next) => {
                     });
                 }
             });
-        } else {
-            return res.status(401).json({
-                status_code: 401,
-                error: "Something went wrong, token is invalid!",
-            });
-        }
+            } else {
+                return res.status(401).json({
+                    status_code: 401,
+                    error: "Something went wrong, token is invalid!",
+                });
+            }
         } catch (error) {
             if (error.name === "TokenExpiredError") {
                 return res.status(401).json({
